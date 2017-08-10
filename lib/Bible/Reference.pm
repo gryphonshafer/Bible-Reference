@@ -8,19 +8,322 @@ use warnings;
 use Moose;
 use Moose::Util::TypeConstraints;
 use MooseX::Privacy;
+use Readonly;
 
 # VERSION
 
 has 'acronyms', is => 'rw', isa => 'Bool', default => 0;
 has 'sorting',  is => 'rw', isa => 'Bool', default => 1;
 
-my @bible_types = qw( Protestant Catholic Orthodox Vulgate );
+Readonly my %_bibles => (
+    'Protestant' => [
+        [ 'Genesis',               'Ge',   'Gn',    'Gen'          ],
+        [ 'Exodus',                'Ex',   'Exo'                   ],
+        [ 'Leviticus',             'Lv',   'Lev'                   ],
+        [ 'Numbers',               'Nu',   'Nm',    'Num'          ],
+        [ 'Deuteronomy',           'Dt',   'Deu'                   ],
+        [ 'Joshua',                'Jsh',  'Jos',   'Josh'         ],
+        [ 'Judges',                'Jdg',  'Judg'                  ],
+        [ 'Ruth',                  'Ru',   'Rut'                   ],
+        [ '1 Samuel',              '1Sa',  '1Sm',   '1Sam'         ],
+        [ '2 Samuel',              '2Sa',  '2Sm',   '2Sam'         ],
+        [ '1 Kings',               '1Ki',  '1Kg',,  '1Kin'         ],
+        [ '2 Kings',               '2Ki',  '2Kg',,  '2Kin'         ],
+        [ '1 Chronicles',          '1Ch',  '1Cr',   '1Chr'         ],
+        [ '2 Chronicles',          '2Ch',  '2Cr',   '2Chr'         ],
+        [ 'Ezra',                  'Ezr'                           ],
+        [ 'Nehemiah',              'Ne',   'Neh'                   ],
+        [ 'Esther',                'Est',  'Esth'                  ],
+        [ 'Job',                   'Jb',   'Jo',    'Job'          ],
+        [ 'Psalms',                'Ps',   'Psa'                   ],
+        [ 'Proverbs',              'Pr',   'Prv',   'Pro',  'Prov' ],
+        [ 'Ecclesiastes',          'Ec',   'Ecc',   'Eccl'         ],
+        [ 'Song of Solomon',       'SS',   'Son',   'Song'         ],
+        [ 'Isaiah',                'Is',   'Isa'                   ],
+        [ 'Jeremiah',              'Jr',   'Jer'                   ],
+        [ 'Lamentations',          'Lm',   'La',    'Lam'          ],
+        [ 'Ezekiel',               'Ezk',  'Ez',    'Eze',  'Ezek' ],
+        [ 'Daniel',                'Da',   'Dn',    'Dan'          ],
+        [ 'Hosea',                 'Ho',   'Hs',    'Hos'          ],
+        [ 'Joel',                  'Jl',   'Joe',   'Joel'         ],
+        [ 'Amos',                  'Am',   'Amo'                   ],
+        [ 'Obadiah',               'Ob',   'Oba'                   ],
+        [ 'Jonah',                 'Jnh',  'Jon',   'Jona'         ],
+        [ 'Micah',                 'Mi',   'Mic'                   ],
+        [ 'Nahum',                 'Na',   'Nah'                   ],
+        [ 'Habakkuk',              'Hab'                           ],
+        [ 'Zephaniah',             'Zp',   'Zep',   'Zph',  'Zeph' ],
+        [ 'Haggai',                'Hg',   'Hag'                   ],
+        [ 'Zechariah',             'Zec',  'Zch',   'Zech'         ],
+        [ 'Malachi',               'Ml',   'Mal'                   ],
+        [ 'Matthew',               'Mt',   'Mat',   'Matt'         ],
+        [ 'Mark',                  'Mk',   'Mr',    'Mc',   'Mark' ],
+        [ 'Luke',                  'Lk',   'Lu',    'Luk'          ],
+        [ 'John',                  'Joh'                           ],
+        [ 'Acts',                  'Ac',   'Act'                   ],
+        [ 'Romans',                'Ro',   'Rm',    'Rom'          ],
+        [ '1 Corinthians',         '1Co',  '1Cor'                  ],
+        [ '2 Corinthians',         '2Co',  '2Cor'                  ],
+        [ 'Galatians',             'Ga',   'Gl',    'Gal'          ],
+        [ 'Ephesians',             'Ep',   'Eph'                   ],
+        [ 'Philippians',           'Php',  'Phil'                  ],
+        [ 'Colossians',            'Cl',   'Col'                   ],
+        [ '1 Thessalonians',       '1Th',  '1The'                  ],
+        [ '2 Thessalonians',       '2Th',  '2The'                  ],
+        [ '1 Timothy',             '1Ti',  '1Tm',   '1Tim'         ],
+        [ '2 Timothy',             '2Ti',  '2Tm',   '2Tim'         ],
+        [ 'Titus',                 'Ti',   'Tt'                    ],
+        [ 'Philemon',              'Phm',  'Phile'                 ],
+        [ 'Hebrews',               'He',   'Heb'                   ],
+        [ 'James',                 'Jam',  'Jms'                   ],
+        [ '1 Peter',               '1Pt',  '1Pe',   '1Pet'         ],
+        [ '2 Peter',               '2Pt',  '2Pe',   '2Pet'         ],
+        [ '1 John',                '1Jn',  '1Jo',   '1Joh'         ],
+        [ '2 John',                '2Jn',  '2Jo',   '2Joh'         ],
+        [ '3 John',                '3Jn',  '3Jo',   '3Joh'         ],
+        [ 'Jude',                  'Jud',  'Jude'                  ],
+        [ 'Revelation',            'Rv',   'Rev'                   ],
+    ],
+    'Catholic' => [
+        [ 'Genesis',               'Ge',   'Gn',    'Gen'          ],
+        [ 'Exodus',                'Ex',   'Exo'                   ],
+        [ 'Leviticus',             'Lv',   'Lev'                   ],
+        [ 'Numbers',               'Nu',   'Nm',    'Num'          ],
+        [ 'Deuteronomy',           'Dt',   'Deu'                   ],
+        [ 'Joshua',                'Jsh',  'Jos',   'Josh'         ],
+        [ 'Judges',                'Jdg',  'Judg'                  ],
+        [ 'Ruth',                  'Ru',   'Rut'                   ],
+        [ '1 Samuel',              '1Sa',  '1Sm',   '1Sam'         ],
+        [ '2 Samuel',              '2Sa',  '2Sm',   '2Sam'         ],
+        [ '1 Kings',               '1Ki',  '1Kg',   '1Kin'         ],
+        [ '2 Kings',               '2Ki',  '2Kg',   '2Kin'         ],
+        [ '1 Chronicles',          '1Ch',  '1Cr',   '1Chr'         ],
+        [ '2 Chronicles',          '2Ch',  '2Cr',   '2Chr'         ],
+        [ 'Ezra',                  'Ezr'                           ],
+        [ 'Nehemiah',              'Ne',   'Neh'                   ],
+        [ 'Tobit',                 'Tb',   'Tob'                   ],
+        [ 'Judith',                'Judi'                          ],
+        [ 'Esther',                'Est',  'Esth'                  ],
+        [ '1 Maccabees',           '1Ma',  '1Mac'                  ],
+        [ '2 Maccabees',           '2Ma',  '2Mac'                  ],
+        [ 'Job',                   'Jb',   'Jo',    'Job'          ],
+        [ 'Psalms',                'Ps',   'Psa'                   ],
+        [ 'Proverbs',              'Pr',   'Prv',   'Pro',  'Prov' ],
+        [ 'Ecclesiastes',          'Ec',   'Ecc',   'Eccl'         ],
+        [ 'Song of Songs',         'SS',   'Son',   'Song'         ],
+        [ 'Wisdom',                'Wi',   'Ws',    'Wis'          ],
+        [ 'Sirach',                'Si',   'Sr',    'Sir'          ],
+        [ 'Isaiah',                'Is',   'Isa'                   ],
+        [ 'Jeremiah',              'Jr',   'Jer'                   ],
+        [ 'Lamentations',          'Lm',   'La',    'Lam'          ],
+        [ 'Baruch',                'Ba',   'Br',    'Bar'          ],
+        [ 'Ezekiel',               'Ezk',  'Ez',    'Eze',  'Ezek' ],
+        [ 'Daniel',                'Da',   'Dn',    'Dan'          ],
+        [ 'Hosea',                 'Ho',   'Hs',    'Hos'          ],
+        [ 'Joel',                  'Jl',   'Joe',   'Joel'         ],
+        [ 'Amos',                  'Am',   'Amo'                   ],
+        [ 'Obadiah',               'Ob',   'Oba'                   ],
+        [ 'Jonah',                 'Jnh',  'Jon',   'Jona'         ],
+        [ 'Micah',                 'Mi',   'Mic'                   ],
+        [ 'Nahum',                 'Na',   'Nah'                   ],
+        [ 'Habakkuk',              'Hab'                           ],
+        [ 'Zephaniah',             'Zp',   'Zep',   'Zph',  'Zeph' ],
+        [ 'Haggai',                'Hg',   'Hag'                   ],
+        [ 'Zechariah',             'Zec',  'Zch',   'Zech'         ],
+        [ 'Malachi',               'Ml',   'Mal'                   ],
+        [ 'Matthew',               'Mt',   'Mat',   'Matt'         ],
+        [ 'Mark',                  'Mk',   'Mr',    'Mc',   'Mark' ],
+        [ 'Luke',                  'Lk',   'Lu',    'Luk'          ],
+        [ 'John',                  'Joh'                           ],
+        [ 'Acts',                  'Ac',   'Act'                   ],
+        [ 'Romans',                'Ro',   'Rm',    'Rom'          ],
+        [ '1 Corinthians',         '1Co',  '1Cor'                  ],
+        [ '2 Corinthians',         '2Co',  '2Cor'                  ],
+        [ 'Galatians',             'Ga',   'Gl',    'Gal'          ],
+        [ 'Ephesians',             'Ep',   'Eph'                   ],
+        [ 'Philippians',           'Php',  'Phil'                  ],
+        [ 'Colossians',            'Cl',   'Col'                   ],
+        [ '1 Thessalonians',       '1Th',  '1The'                  ],
+        [ '2 Thessalonians',       '2Th',  '2The'                  ],
+        [ '1 Timothy',             '1Ti',  '1Tm',   '1Tim'         ],
+        [ '2 Timothy',             '2Ti',  '2Tm',   '2Tim'         ],
+        [ 'Titus',                 'Ti',   'Tt'                    ],
+        [ 'Philemon',              'Phm',  'Phile'                 ],
+        [ 'Hebrews',               'He',   'Heb'                   ],
+        [ 'James',                 'Jam',  'Jms'                   ],
+        [ '1 Peter',               '1Pt',  '1Pe',   '1Pet'         ],
+        [ '2 Peter',               '2Pt',  '2Pe',   '2Pet'         ],
+        [ '1 John',                '1Jn',  '1Jo',   '1Joh'         ],
+        [ '2 John',                '2Jn',  '2Jo',   '2Joh'         ],
+        [ '3 John',                '3Jn',  '3Jo',   '3Joh'         ],
+        [ 'Jude',                  'Jud',  'Jude'                  ],
+        [ 'Revelation',            'Rv',   'Rev'                   ],
+    ],
+    'Vulgate' => [
+        [ 'Genesis',               'Ge',   'Gn',    'Gen'          ],
+        [ 'Exodus',                'Ex',   'Exo'                   ],
+        [ 'Leviticus',             'Lv',   'Lev'                   ],
+        [ 'Numbers',               'Nu',   'Nm',    'Num'          ],
+        [ 'Deuteronomy',           'Dt',   'Deu'                   ],
+        [ 'Joshua',                'Jsh',  'Jos',   'Josh'         ],
+        [ 'Judges',                'Jdg',  'Judg'                  ],
+        [ 'Ruth',                  'Ru',   'Rut'                   ],
+        [ '1 Kings',               '1Ki',  '1Kg',   '1Kin'         ],
+        [ '2 Kings',               '2Ki',  '2Kg',   '2Kin'         ],
+        [ '3 Kings',               '3Ki',  '3Kg',   '3Kin'         ],
+        [ '4 Kings',               '4Ki',  '4Kg',   '4Kin'         ],
+        [ '1 Paralipomenon',       '1Pa',  '1Par'                  ],
+        [ '2 Paralipomenon',       '2Pa',  '2Par'                  ],
+        [ '1 Esdras',              '1Esd'                          ],
+        [ '2 Esdras',              '2Esd'                          ],
+        [ '3 Esdras',              '3Esd'                          ],
+        [ '4 Esdras',              '4Esd'                          ],
+        [ 'Tobias',                'Tb',   'Tob'                   ],
+        [ 'Judith',                'Judi'                          ],
+        [ 'Esther',                'Est',  'Esth'                  ],
+        [ '1 Maccabees',           '1Ma',  '1Mac'                  ],
+        [ '2 Maccabees',           '2Ma',  '2Mac'                  ],
+        [ 'Job',                   'Jb',   'Jo',    'Job'          ],
+        [ 'Psalms',                'Ps',   'Psa'                   ],
+        [ 'Prayer of Manasseh',    'PM',   'Pra',   'Man'          ],
+        [ 'Proverbs',              'Pr',   'Prv',   'Pro',  'Prov' ],
+        [ 'Ecclesiastes',          'Ec',   'Ecc',   'Eccl'         ],
+        [ 'Canticle of Canticles', 'CC',   'Can'                   ],
+        [ 'Wisdom',                'Wi',   'Ws',    'Wis'          ],
+        [ 'Ecclesiasticus',        'Ecu',  'Eclu'                  ],
+        [ 'Isaias',                'Is',   'Isa'                   ],
+        [ 'Jeremias',              'Jr',   'Jer'                   ],
+        [ 'Lamentations',          'Lm',   'La',    'Lam'          ],
+        [ 'Baruch',                'Ba',   'Br',    'Bar'          ],
+        [ 'Ezekiel',               'Ezk',  'Ez',    'Eze',  'Ezek' ],
+        [ 'Daniel',                'Da',   'Dn',    'Dan'          ],
+        [ 'Osee',                  'Os',   'Ose'                   ],
+        [ 'Joel',                  'Jl',   'Joe',   'Joel'         ],
+        [ 'Amos',                  'Am',   'Amo'                   ],
+        [ 'Abdias',                'Ab',   'Abd'                   ],
+        [ 'Jonas',                 'Jns',  'Jon',   'Jona'         ],
+        [ 'Micheas',               'Mi',   'Mic'                   ],
+        [ 'Nahu',                  'Na',   'Nah'                   ],
+        [ 'Habacuc',               'Hab'                           ],
+        [ 'Sophonias',             'So',   'Sop',   'Sph'          ],
+        [ 'Aggeus',                'Ag',   'Agg '                  ],
+        [ 'Zacharias',             'Zec',  'Zch',   'Zech'         ],
+        [ 'Malachias',             'Ml',   'Mal'                   ],
+        [ 'Matthew',               'Mt',   'Mat',   'Matt'         ],
+        [ 'Mark',                  'Mk',   'Mr',    'Mc',   'Mark' ],
+        [ 'Luke',                  'Lk',   'Lu',    'Luk'          ],
+        [ 'John',                  'Joh'                           ],
+        [ 'Acts',                  'Ac',   'Act'                   ],
+        [ 'Romans',                'Ro',   'Rm',    'Rom'          ],
+        [ '1 Corinthians',         '1Co',  '1Cor'                  ],
+        [ '2 Corinthians',         '2Co',  '2Cor'                  ],
+        [ 'Galatians',             'Ga',   'Gl',    'Gal'          ],
+        [ 'Ephesians',             'Ep',   'Eph'                   ],
+        [ 'Philippians',           'Php',  'Phil'                  ],
+        [ 'Colossians',            'Cl',   'Col'                   ],
+        [ '1 Thessalonians',       '1Th',  '1The'                  ],
+        [ '2 Thessalonians',       '2Th',  '2The'                  ],
+        [ '1 Timothy',             '1Ti',  '1Tm',   '1Tim'         ],
+        [ '2 Timothy',             '2Ti',  '2Tm',   '2Tim'         ],
+        [ 'Titus',                 'Ti',   'Tt'                    ],
+        [ 'Philemon',              'Phm',  'Phile'                 ],
+        [ 'Hebrews',               'He',   'Heb'                   ],
+        [ 'James',                 'Jam',  'Jms'                   ],
+        [ '1 Peter',               '1Pt',  '1Pe',   '1Pet'         ],
+        [ '2 Peter',               '2Pt',  '2Pe',   '2Pet'         ],
+        [ '1 John',                '1Jn',  '1Jo',   '1Joh'         ],
+        [ '2 John',                '2Jn',  '2Jo',   '2Joh'         ],
+        [ '3 John',                '3Jn',  '3Jo',   '3Joh'         ],
+        [ 'Jude',                  'Jud',  'Jude'                  ],
+        [ 'Revelation',            'Rv',   'Rev'                   ],
+    ],
+    'Orthodox' => [
+        [ 'Genesis',               'Ge',   'Gn',    'Gen'          ],
+        [ 'Exodus',                'Ex',   'Exo'                   ],
+        [ 'Leviticus',             'Lv',   'Lev'                   ],
+        [ 'Numbers',               'Nu',   'Nm',    'Num'          ],
+        [ 'Deuteronomy',           'Dt',   'Deu'                   ],
+        [ 'Joshua',                'Jsh',  'Jos',   'Josh'         ],
+        [ 'Judges',                'Jdg',  'Judg'                  ],
+        [ 'Ruth',                  'Ru',   'Rut'                   ],
+        [ '1 Samuel',              '1Sa',  '1Sm',   '1Sam'         ],
+        [ '2 Samuel',              '2Sa',  '2Sm',   '2Sam'         ],
+        [ '1 Kings',               '1Ki',  '1Kg',   '1Kin'         ],
+        [ '2 Kings',               '2Ki',  '2Kg',   '2Kin'         ],
+        [ '1 Chronicles',          '1Ch',  '1Cr',   '1Chr'         ],
+        [ '2 Chronicles',          '2Ch',  '2Cr',   '2Chr'         ],
+        [ '1 Esdras',              '1Esd'                          ],
+        [ 'Ezra',                  'Ezr'                           ],
+        [ 'Nehemiah',              'Ne',   'Neh'                   ],
+        [ 'Tobit',                 'Tb',   'Tob'                   ],
+        [ 'Judith',                'Judi'                          ],
+        [ 'Esther',                'Est',  'Esth'                  ],
+        [ '1 Maccabees',           '1Ma',  '1Mac'                  ],
+        [ '2 Maccabees',           '2Ma',  '2Mac'                  ],
+        [ '3 Maccabees',           '3Ma',  '3Mac'                  ],
+        [ '4 Maccabees',           '4Ma',  '4Mac'                  ],
+        [ 'Job',                   'Jb',   'Jo',    'Job'          ],
+        [ 'Psalms',                'Ps',   'Psa'                   ],
+        [ 'Prayer of Manasseh',    'PM',   'Pra',   'Man'          ],
+        [ 'Proverbs',              'Pr',   'Prv',   'Pro',  'Prov' ],
+        [ 'Ecclesiastes',          'Ec',   'Ecc',   'Eccl'         ],
+        [ 'Song of Songs',         'SS',   'Son',   'Song'         ],
+        [ 'Wisdom',                'Wi',   'Ws',    'Wis'          ],
+        [ 'Sirach',                'Si',   'Sr',    'Sir'          ],
+        [ 'Isaiah',                'Is',   'Isa'                   ],
+        [ 'Jeremiah',              'Jr',   'Jer'                   ],
+        [ 'Lamentations',          'Lm',   'La',    'Lam'          ],
+        [ 'Baruch',                'Ba',   'Br',    'Bar'          ],
+        [ 'Letter of Jeremiah',    'LJ',   'Let'                   ],
+        [ 'Ezekiel',               'Ezk',  'Ez',    'Eze',  'Ezek' ],
+        [ 'Daniel',                'Da',   'Dn',    'Dan'          ],
+        [ 'Hosea',                 'Ho',   'Hs',    'Hos'          ],
+        [ 'Joel',                  'Jl',   'Joe',   'Joel'         ],
+        [ 'Amos',                  'Am',   'Amo'                   ],
+        [ 'Obadiah',               'Ob',   'Oba'                   ],
+        [ 'Jonah',                 'Jnh',  'Jon',   'Jona'         ],
+        [ 'Micah',                 'Mi',   'Mic'                   ],
+        [ 'Nahum',                 'Na',   'Nah'                   ],
+        [ 'Habakkuk',              'Hab'                           ],
+        [ 'Zephaniah',             'Zp',   'Zep',   'Zph',  'Zeph' ],
+        [ 'Haggai',                'Hg',   'Hag'                   ],
+        [ 'Zechariah',             'Zec',  'Zch',   'Zech'         ],
+        [ 'Malachi',               'Ml',   'Mal'                   ],
+        [ 'Matthew',               'Mt',   'Mat',   'Matt'         ],
+        [ 'Mark',                  'Mk',   'Mr',    'Mc',   'Mark' ],
+        [ 'Luke',                  'Lk',   'Lu',    'Luk'          ],
+        [ 'John',                  'Joh'                           ],
+        [ 'Acts',                  'Ac',   'Act'                   ],
+        [ 'Romans',                'Ro',   'Rm',    'Rom'          ],
+        [ '1 Corinthians',         '1Co',  '1Cor'                  ],
+        [ '2 Corinthians',         '2Co',  '2Cor'                  ],
+        [ 'Galatians',             'Ga',   'Gl',    'Gal'          ],
+        [ 'Ephesians',             'Ep',   'Eph'                   ],
+        [ 'Philippians',           'Php',  'Phil'                  ],
+        [ 'Colossians',            'Cl',   'Col'                   ],
+        [ '1 Thessalonians',       '1Th',  '1The'                  ],
+        [ '2 Thessalonians',       '2Th',  '2The'                  ],
+        [ '1 Timothy',             '1Ti',  '1Tm',   '1Tim'         ],
+        [ '2 Timothy',             '2Ti',  '2Tm',   '2Tim'         ],
+        [ 'Titus',                 'Ti',   'Tt'                    ],
+        [ 'Philemon',              'Phm',  'Phile'                 ],
+        [ 'Hebrews',               'He',   'Heb'                   ],
+        [ 'James',                 'Jam',  'Jms'                   ],
+        [ '1 Peter',               '1Pt',  '1Pe',   '1Pet'         ],
+        [ '2 Peter',               '2Pt',  '2Pe',   '2Pet'         ],
+        [ '1 John',                '1Jn',  '1Jo',   '1Joh'         ],
+        [ '2 John',                '2Jn',  '2Jo',   '2Joh'         ],
+        [ '3 John',                '3Jn',  '3Jo',   '3Joh'         ],
+        [ 'Jude',                  'Jud',  'Jude'                  ],
+        [ 'Revelation',            'Rv',   'Rev'                   ],
+    ],
+);
 
 subtype 'BibleType',
     as 'Str',
     where {
         my $type = $_;
-        grep { $type eq $_ } @bible_types;
+        grep { $type eq $_ } keys %_bibles;
     },
     message {'Could not determine a valid Bible type from input'};
 
@@ -28,7 +331,7 @@ coerce 'BibleType',
     from 'Str',
     via {
         my $input = lc( substr( $_ || '', 0, 1 ) );
-        my ($type) = grep { lc( substr( $_, 0, 1 ) ) eq $input } @bible_types;
+        my ($type) = grep { lc( substr( $_, 0, 1 ) ) eq $input } keys %_bibles;
         return $type;
     };
 
@@ -37,7 +340,21 @@ has 'bible',
     isa     => 'BibleType',
     default => 'Protestant',
     coerce  => 1,
-    trigger => sub { shift->_build_books };
+    trigger => sub { shift->_build_bible_data };
+
+sub BUILD {
+    shift->_build_bible_data;
+}
+
+has '_bible_data',
+    is      => 'rw',
+    isa     => 'ArrayRef[ArrayRef[Str]]',
+    traits  => ['Private'];
+
+private_method _build_bible_data => sub {
+    my ($self) = @_;
+    $self->_bible_data( $_bibles{ $self->bible } );
+};
 
 has '_in',
     is      => 'rw',
@@ -45,206 +362,25 @@ has '_in',
     traits  => ['Private'],
     default => sub { [] };
 
-has '_books_protestant',
-    is      => 'ro',
-    isa     => 'ArrayRef[ArrayRef[Str]]',
-    traits  => ['Private'],
-    default => sub { [
-        [ 'Genesis', 'Ge', 'Gen' ],
-        [ 'Exodus', 'Ex', 'Exo' ],
-        [ 'Leviticus', 'Le', 'Lev' ],
-        [ 'Numbers', 'Nu', 'Num' ],
-        [ 'Deuteronomy', 'De', 'Deut' ],
-        [ 'Joshua', 'Jsh', 'Josh' ],
-        [ 'Judges', 'Jdg', 'Judg' ],
-        [ 'Ruth', 'Ru', 'Ruth' ],
-        [ '1 Samuel', '1Sa', '1 Sam' ],
-        [ '2 Samuel', '2Sa', '2 Sam' ],
-        [ '1 Kings', '1Ki' ],
-        [ '2 Kings', '2Ki' ],
-        [ '1 Chronicles', '1Ch', '1 Chr' ],
-        [ '2 Chronicles', '2Ch', '2 Chr' ],
-        [ 'Ezra', 'Er', 'Ezra' ],
-        [ 'Nehemiah', 'Ne', 'Neh' ],
-        [ 'Esther', 'Es', 'Esth' ],
-        [ 'Job', 'Jb', 'Job' ],
-        [ 'Psalms', 'Ps' ],
-        [ 'Proverbs', 'Prv', 'Prov' ],
-        [ 'Ecclesiastes', 'Ec', 'Eccl' ],
-        [ 'Song of Solomon', 'Sng', 'Song' ],
-        [ 'Isaiah', 'Is', 'Isa' ],
-        [ 'Jeremiah', 'Je', 'Jer' ],
-        [ 'Lamentations', 'Lm', 'Lam' ],
-        [ 'Ezekiel', 'Ek', 'Ezek' ],
-        [ 'Daniel', 'Da', 'Dan' ],
-        [ 'Hosea', 'Ho', 'Hos' ],
-        [ 'Joel', 'Jl', 'Joel' ],
-        [ 'Amos', 'Am', 'Amos' ],
-        [ 'Obadiah', 'Ob', 'Oba' ],
-        [ 'Jonah', 'Jnh', 'Jonah' ],
-        [ 'Micah', 'Mi', 'Mic' ],
-        [ 'Nahum', 'Na', 'Nah' ],
-        [ 'Habakkuk', 'Hb', 'Hab' ],
-        [ 'Zephaniah', 'Zph', 'Zeph' ],
-        [ 'Haggai', 'Hg', 'Hag' ],
-        [ 'Zechariah', 'Zch', 'Zech' ],
-        [ 'Malachi', 'Ml', 'Mal' ],
-        [ 'Matthew', 'Mt', 'Matt' ],
-        [ 'Mark', 'Mk', 'Mark' ],
-        [ 'Luke', 'Lk', 'Luke' ],
-        [ 'John', 'Jhn', 'John' ],
-        [ 'Acts', 'Ac', 'Acts' ],
-        [ 'Romans', 'Ro', 'Rom' ],
-        [ '1 Corinthians', '1Co', '1 Cor' ],
-        [ '2 Corinthians', '2Co', '2 Cor' ],
-        [ 'Galatians', 'Ga', 'Gal' ],
-        [ 'Ephesians', 'Eph' ],
-        [ 'Philippians', 'Php', 'Philip' ],
-        [ 'Colossians', 'Co', 'Col' ],
-        [ '1 Thessalonians', '1Th' ],
-        [ '2 Thessalonians', '2Th' ],
-        [ '1 Timothy', '1Tm', '1 Tim' ],
-        [ '2 Timothy', '2Tm', '2 Tim' ],
-        [ 'Titus', 'Ti', 'Titus' ],
-        [ 'Philemon', 'Phm', 'Phile' ],
-        [ 'Hebrews', 'He', 'Heb' ],
-        [ 'James', 'Ja', 'Jam' ],
-        [ '1 Peter', '1Pt', '1 Pet' ],
-        [ '2 Peter', '2Pt', '2 Pet' ],
-        [ '1 John', '1Jn' ],
-        [ '2 John', '2Jn' ],
-        [ '3 John', '3Jn' ],
-        [ 'Jude', 'Jud', 'Jude' ],
-        [ 'Revelation', 'Rv', 'Rev' ],
-    ] };
-
-has '_books',
-    is      => 'rw',
-    isa     => 'ArrayRef[ArrayRef[Str]]';
-#    traits  => ['Private'];
-
-sub BUILD {
-    shift->_build_books;
-}
-
-private_method _build_books => sub {
-    my ($self) = @_;
-
-    $self->_books([]);
-    my $bible = $self->bible;
-
-    for my $book ( @{ $self->_books_protestant } ) {
-        my @book = @$book;
-
-        if ( $bible ne 'Protestant' ) {
-            if ( $book[0] eq 'Joshua' ) {
-                if ( $bible eq 'Catholic' or $bible eq 'Vulgate' ) {
-                    push( @book, 'Josue', 'Jou' );
-                }
-                elsif ( $bible eq 'Orthodox' ) {
-                    push( @book, 'Iesous', 'Ie' );
-                }
-            }
-            elsif ( $book[0] =~ /([12]) Samuel/ ) {
-                if ( $bible eq 'Catholic' or $bible eq 'Vulgate' ) {
-                    push( @book, $1 . ' Kings', $1 . 'Ki' );
-                }
-                elsif ( $bible eq 'Orthodox' ) {
-                    push( @book, $1 . ' Kingdoms', $1 . 'Ki' );
-                }
-            }
-            elsif ( $book[0] =~ /([12]) Kings/ ) {
-                if ( $bible eq 'Catholic' or $bible eq 'Vulgate' ) {
-                    push( @book, ( $1 + 2 ) . ' Kings', ( $1 + 2 ) . 'Ki' );
-                }
-                elsif ( $bible eq 'Orthodox' ) {
-                    push( @book, ( $1 + 2 ) . ' Kingdoms', ( $1 + 2 ). 'Ki' );
-                }
-            }
-            elsif ( $book[0] =~ /([12]) Chronicles/ ) {
-                push( @book, $1 . ' Paralipomenon', $1 . ' Par' );
-            }
-            elsif ( $book[0] eq 'Ezra' ) {
-                push( @book, '1 Esdras', '1 Es' );
-            }
-            elsif ( $book[0] eq 'Nehemiah' ) {
-                push( @book, '2 Esdras', '2 Es' );
-            }
-            elsif ( $book[0] eq 'Esther' ) {
-                if ( $bible eq 'Vulgate' ) {
-                    push( @{ $self->_books },
-                        [ '3 Esdras', '3 Es' ],
-                        [ '4 Esdras', '4 Es' ],
-                    );
-                }
-                if ( $bible eq 'Catholic' or $bible eq 'Vulgate' ) {
-                    push( @{ $self->_books },
-                        [ 'Tobit', 'To', 'Tobias' ],
-                        [ 'Judith', 'Ju' ],
-                    );
-                }
-            }
-            elsif ( $book[0] eq 'Job' ) {
-                push( @{ $self->_books },
-                    [ '1 Maccabees', '1 Mac', '1 Machabees' ],
-                    [ '2 Maccabees', '2 Mac', '2 Machabees' ],
-                );
-                if ( $bible eq 'Orthodox' ) {
-                    push( @{ $self->_books },
-                        [ '3 Maccabees', '3 Mac', '3 Machabees' ],
-                        [ '4 Maccabees', '4 Mac', '4 Machabees' ],
-                    );
-                }
-            }
-            elsif ( $book[0] eq 'Proverbs' and ( $bible eq 'Vulgate' or $bible eq 'Orthodox' ) ) {
-                push( @{ $self->_books }, [ 'Prayer of Manasseh', 'Pra' ] );
-            }
-            elsif ( $book[0] eq 'Song of Solomon' ) {
-                if ( $bible eq 'Vulgate' or $bible eq 'Catholic' ) {
-                    unshift( @book, 'Song of Songs', 'Sng', 'Canticle of Canticles' );
-                }
-                elsif ( $bible eq 'Orthodox' ) {
-                    unshift( @book, 'Song of Songs', 'Sng', 'Aisma Aismaton' );
-                }
-            }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        }
-
-        push( @{ $self->_books }, \@book );
-    }
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 sub in {
     my $self = shift;
     return $self->_in unless (@_);
-    push( @{ $self->_in }, @_ );
+
+    push( @{ $self->_in }, map {
+
+# 'Text with I Pet 3:16 and Rom 12:13-14,17 references in it.'
+
+# [
+#     'Text with ',
+#     [ '1 Peter', [[ 3, [16] ]]],
+#     ' and ',
+#     [ 'Romans', [[ 12, [ 13, 14, 17 ]]]],
+#     ' references in it.',
+# ],
+
+        $_;
+    } @_ );
+
     return $self;
 }
 
@@ -253,17 +389,6 @@ sub clear {
     $self->_in([]);
     return $self;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 1;
 __END__

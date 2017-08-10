@@ -16,7 +16,7 @@ sub instantiation : Test( startup => 4 ) {
     shift->{obj} = $obj;
 }
 
-sub attributes_and_classes : Test(4) {
+sub attributes_and_classes : Test(6) {
     my $obj = shift->{obj};
     has_attribute_ok( $obj, $_, qq{attribute "$_" exists} ) for ( qw( acronyms sorting bible ) );
     can_ok( $obj, $_ ) for ( qw( _in in ) );
@@ -39,7 +39,7 @@ sub bible_type : Test(6) {
     );
 }
 
-sub in_and_clear : Tests {
+sub in_and_clear : Test(9) {
     my $obj = shift->{obj};
 
     is_deeply( $obj->in, [], 'in() is empty' );
@@ -87,15 +87,5 @@ sub in_and_clear : Tests {
 
     is_deeply( $obj->in, [], 'in() is empty' );
 }
-
-
-
-
-
-
-
-
-
-
 
 1;

@@ -7,19 +7,42 @@ use lib 'lib';
 use Bible::Reference;
 
 my $r = Bible::Reference->new;
-$r->bible( $ARGV[0] ) if $ARGV[0];
 
-for ( @{ $r->_books } ) {
-    print join( ' | ', map { $_ . ' ' x ( 16 - length($_) ) } @$_ ), "\n";
-}
+$r->in('Text with I Pet 3:16 and Rom 12:13-14,17 references in it.');
 
+=pod
 
+    my $refs = $r->refs;
+    # 'Romans 12:13-14, 17; 1 Peter 3:16'
 
+    my $books = $r->as_books;
+    # [ 'Romans 12:13-14, 17', '1 Peter 3:16' ]
 
+    my $verses = $r->as_verses;
+    # [ 'Romans 12:13', 'Romans 12:14', 'Romans 12:17', '1 Peter 3:16' ]
 
+    my $hash = $r->as_hash;
+    # { 'Romans' => { 12 => [ 13, 14, 17 ] }, '1 Peter' => { 3 => [16] } }
 
+    my $array = $r->as_array;
+    # [[ 'Romans', [[ 12, [ 13, 14, 17 ]]]], [ '1 Peter', [[ 3, [16] ]]]]
 
+    my $text = $r->as_text;
+    # 'Text with 1 Peter 3:16 and Romans 12:13-14, 17 references in it.'
 
+    $r = $r->in('More text with Romans 12:16, 13:14-15 in it.'); # appends "in"
+    $r = $r->clear; # clears "in" data but not anything else
+
+    my @books = $r->books;
+
+    my @sorted      = $r->sort( 'Romans', 'James 1:5', 'Romans 5' );
+    my @also_sorted = sort $r->by_bible_order 'Romans', 'James 1:5', 'Romans 5';
+
+    $r->bible('Vulgate');
+    $r->acronyms(1);
+    $r->sorting(0);
+
+=cut
 
 __END__
 
