@@ -370,6 +370,15 @@ sub in {
 
     my $book_re   = ( $self->require_book_ucfirst ) ? qr/[A-Z][A-z]*/     : qr/[A-z]+/;
     my $verses_re = ( $self->require_verse_match )  ? qr/[\d:\-,;\s]+\d+/ : qr/(?:[\d:\-,;\s]+\d+)?/;
+    my $ref_re    = qr/
+        \b(?<book>
+            (?:(?:[123]|[Ii]{1,3})\s*)?
+            $book_re
+        )
+        (?<book_suffix>\.?\s+)
+        (?<numbers_prefix>ch\.?\s)?
+        (?<numbers>\d+$verses_re)
+    /x;
 
     push( @{ $self->_in }, map {
 
@@ -380,19 +389,20 @@ sub in {
 
         while (
             $text =~ s/
-                (?<pretext>.*?)
-                \b(?<book>
-                    (?:(?:[123]|[Ii]{1,3})\s*)?
-                    $book_re
+                $ref_re
+                (?<posttext>
+                    (?!$ref_re)
                 )
-                (?<book_suffix>\.?\s+)
-                (?<numbers_prefix>ch\.?\s)?
-                (?<numbers>\d+$verses_re)
-                (?<punctuation>[;,\s]*)
+                $
             //x
         ) {
 
-# $+{book}, $+{numbers}
+
+
+print join( "\n", $+{book}, $+{numbers}, $+{posttext} ), "\n\n";
+
+
+
 
 #### is "book" in the list of known full names
 #### is "book" in the list of known acronyms
@@ -400,7 +410,7 @@ sub in {
 #### does "book" =~ /^f.*u.*l.*l.*_.*n.*a.*m.*e.*s/
 #### find/use the proper full name (or acronym if we're set to use acronyms)
 
-            push( @text_parts, $+{pretext}, [ $+{book}, $+{numbers} ] );
+#            push( @text_parts, $+{pretext}, [ $+{book}, $+{numbers} ] );
 
             # push( @text_parts, $+{pretext} . $+{book} );
             # $text = join( '', grep { defined and length }
