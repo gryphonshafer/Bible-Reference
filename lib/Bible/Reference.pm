@@ -12,8 +12,10 @@ use Readonly;
 
 # VERSION
 
-has 'acronyms', is => 'rw', isa => 'Bool', default => 0;
-has 'sorting',  is => 'rw', isa => 'Bool', default => 1;
+has 'acronyms',             is => 'rw', isa => 'Bool', default => 0;
+has 'sorting',              is => 'rw', isa => 'Bool', default => 1;
+has 'require_verse_match',  is => 'rw', isa => 'Bool', default => 0;
+has 'require_book_ucfirst', is => 'rw', isa => 'Bool', default => 0;
 
 Readonly my %_bibles => (
     'Protestant' => [
@@ -366,16 +368,12 @@ sub in {
     my $self = shift;
     return $self->_in unless (@_);
 
+    my $book_re   = ( $self->require_book_ucfirst ) ? qr/[A-Z][A-z]*/     : qr/[A-z]+/;
+    my $verses_re = ( $self->require_verse_match )  ? qr/[\d:\-,;\s]+\d+/ : qr/(?:[\d:\-,;\s]+\d+)?/;
+
     push( @{ $self->_in }, map {
 
-
-
-
 #### split up the text into text parts and possible reference parts
-
-
-
-
 
         my $text = $_;
         my @text_parts;
@@ -385,21 +383,16 @@ sub in {
                 (?<pretext>.*?)
                 \b(?<book>
                     (?:(?:[123]|[Ii]{1,3})\s*)?
-                    [A-z]+
+                    $book_re
                 )
                 (?<book_suffix>\.?\s+)
                 (?<numbers_prefix>ch\.?\s)?
-                (?<numbers>\d+(?:[\d:\-,;\s]+\d+)?)
+                (?<numbers>\d+$verses_re)
                 (?<punctuation>[;,\s]*)
             //x
         ) {
 
-
-
-
 # $+{book}, $+{numbers}
-
-
 
 #### is "book" in the list of known full names
 #### is "book" in the list of known acronyms
@@ -407,20 +400,7 @@ sub in {
 #### does "book" =~ /^f.*u.*l.*l.*_.*n.*a.*m.*e.*s/
 #### find/use the proper full name (or acronym if we're set to use acronyms)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-            # push( @text_parts, $+{pretext}, [ $+{book}, $+{numbers} ] );
+            push( @text_parts, $+{pretext}, [ $+{book}, $+{numbers} ] );
 
             # push( @text_parts, $+{pretext} . $+{book} );
             # $text = join( '', grep { defined and length }
@@ -429,42 +409,14 @@ sub in {
             #     $+{numbers},
             #     $+{punctuation},
             # ) . $text;
-
-
-
         }
 
         @text_parts = grep { defined and length } @text_parts, $text;
         \@text_parts;
 
-
-
-
-
-
-
-
-
 #### test each reference part to see if it's a reference
 #### if real: canonicalize into an data object
 #### if not real: leave as original text
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # 'Text with I Pet 3:16 and Rom 12:13-14,17 references in it.'
 
@@ -475,11 +427,6 @@ sub in {
 #     [ 'Romans', [[ 12, [ 13, 14, 17 ]]]],
 #     ' references in it.',
 # ],
-
-
-
-
-
 
     } @_ );
 
@@ -544,9 +491,11 @@ __END__
     my @sorted      = $r->sort( 'Romans', 'James 1:5', 'Romans 5' );
     my @also_sorted = sort $r->by_bible_order 'Romans', 'James 1:5', 'Romans 5';
 
-    $r->bible('Vulgate');
-    $r->acronyms(1);
-    $r->sorting(0);
+    $r->bible('Vulgate');        # switch to the Vulgate Bible
+    $r->acronyms(1);             # output acronyms instead of full book names
+    $r->sorting(0);              # deactivate sorting of references
+    $r->require_verse_match(1);  # require verses in references for matching
+    $r->require_book_ucfirst(1); # require book names to be ucfirst for matching
 
 =head1 DESCRIPTION
 
@@ -741,32 +690,27 @@ Returns a sort algorithm usable in a native Perl C<sort> call.
 
     my @also_sorted = sort $r->by_bible_order 'Romans', 'James 1:5', 'Romans 5';
 
+=head1 HANDLING MATCHING ERRORS
 
+By default, the module does its best to find things that look like valid
+references inside text. However, this can result in the occational matching
+error. For example, consider the following text input:
 
+    This is an example of the 1 time it might break.
+    It also breaks if you mention number 7 from a list of things.
+    Legal opinions of judges 3 times said this would break.
 
+With this, we'd falsely match: Thessalonians 1, Numbers 7, and Judges 3.
 
+There are a couple things you can do to reduce this problem. You can optionally
+set C<require_verse_match> to a true value. This will cause the matching
+algorithm to only work on reference patterns that contain what look to be
+verses.
 
-=head1 KNOWN ERRORS
-
-The module does its best to find things that look like valid references inside
-text.
-
-
-
-This is an example of the 1 time it might break.
-It also breaks if you mention number 7 from a list of things.
-Legal opinions of judges 3 times said this would break.
-
-
-
-
-
-
-
-
-
-
-
+You can optionally set C<require_book_ucfirst> to a true value. This will cause
+the matching algorithm to only work on reference patterns that contain what
+looks like a book that starts with a capital letter (instead of the default of
+any case).
 
 =head1 SEE ALSO
 

@@ -9,12 +9,13 @@ use Bible::Reference;
 my $r = Bible::Reference->new;
 
 my $in = [
-    'Text that includes Romans 2:2-14 and other words',
-    'Text with I Pet 3:16 and Rom 12:13-14,17 references in it.',
-    'Some text from Rom 4:15,16-19,21 and also 1 Corin 5:16, 6:17-19 and such',
-    'Rom 2:2-14, 15; Mk 5, John 3:16',
+    # 'Text that includes Romans 2 and other words',
+    # 'Text with I Pet 3:16 and Rom 12:13-14,17 references in it.',
+    # 'Some text from Rom 4:15,16-19,21 and also 1 Corin 5:16, 6:17-19 and such',
+    # 'Rom 2:2-14, 15; Mk 5, John 3:16',
     'Lk 3:15-17, 18; 4:5-10',
-    'Ac 20:29; 1Tm 4:1; 2Tm 4:3; 2Pt 3:3',
+    'Acts 20:29, 32, 35, 1 Tim 4:1, 2 Tim 4:3, 2 Pete 3:3',
+    # 'Ac 20:29; 1Tm 4:1; 2Tm 4:3; 2Pt 3:3',
     # 'Romans 1:15',
     # '',
     # 'Nothing to see 42',

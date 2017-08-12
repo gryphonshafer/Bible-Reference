@@ -18,7 +18,10 @@ sub instantiation : Test( startup => 4 ) {
 
 sub attributes_and_classes : Test(6) {
     my $obj = shift->{obj};
-    has_attribute_ok( $obj, $_, qq{attribute "$_" exists} ) for ( qw( acronyms sorting bible ) );
+    has_attribute_ok( $obj, $_, qq{attribute "$_" exists} ) for ( qw(
+        acronyms sorting bible
+        require_verse_match require_book_ucfirst
+    ) );
     can_ok( $obj, $_ ) for ( qw( _in in ) );
     throws_ok( sub { $obj->_in }, qr/Attribute _in is private/, '_in() is private' );
 }
