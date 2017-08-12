@@ -8,7 +8,31 @@ use Bible::Reference;
 
 my $r = Bible::Reference->new;
 
-$r->in('Text with I Pet 3:16 and Rom 12:13-14,17 references in it.');
+my $in = [
+    'Text that includes Romans 2:2-14 and other words',
+    'Text with I Pet 3:16 and Rom 12:13-14,17 references in it.',
+    'Some text from Rom 4:15,16-19,21 and also 1 Corin 5:16, 6:17-19 and such',
+    'Rom 2:2-14, 15; Mk 5, John 3:16',
+    'Lk 3:15-17, 18; 4:5-10',
+    'Ac 20:29; 1Tm 4:1; 2Tm 4:3; 2Pt 3:3',
+    # 'Romans 1:15',
+    # '',
+    # 'Nothing to see 42',
+    # '1 Corinthians 5:15-17, 19',
+    # 'Romans 4:35, 5:46, 48',
+    # 'Mk 5, Rom 2:2-14, 15; John 3:16',
+    # 'Mk 5, John 3:16, Rom 2:2-14, 15',
+];
+
+$r->in(@$in);
+my $out = $r->in;
+
+while ( @$in or @$out ) {
+    say '"', shift @$in, '"';
+    my $x = shift @$out;
+    p $x;
+    print "\n";
+}
 
 =pod
 

@@ -368,6 +368,104 @@ sub in {
 
     push( @{ $self->_in }, map {
 
+
+
+
+#### split up the text into text parts and possible reference parts
+
+
+
+
+
+        my $text = $_;
+        my @text_parts;
+
+        while (
+            $text =~ s/
+                (?<pretext>.*?)
+                \b(?<book>
+                    (?:(?:[123]|[Ii]{1,3})\s*)?
+                    [A-z]+
+                )
+                (?<book_suffix>\.?\s+)
+                (?<numbers_prefix>ch\.?\s)?
+                (?<numbers>\d+(?:[\d:\-,;\s]+\d+)?)
+                (?<punctuation>[;,\s]*)
+            //x
+        ) {
+
+
+
+
+# $+{book}, $+{numbers}
+
+
+
+#### is "book" in the list of known full names
+#### is "book" in the list of known acronyms
+#### does "book" =~ /^full_names/
+#### does "book" =~ /^f.*u.*l.*l.*_.*n.*a.*m.*e.*s/
+#### find/use the proper full name (or acronym if we're set to use acronyms)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            # push( @text_parts, $+{pretext}, [ $+{book}, $+{numbers} ] );
+
+            # push( @text_parts, $+{pretext} . $+{book} );
+            # $text = join( '', grep { defined and length }
+            #     $+{book_suffix},
+            #     $+{numbers_prefix},
+            #     $+{numbers},
+            #     $+{punctuation},
+            # ) . $text;
+
+
+
+        }
+
+        @text_parts = grep { defined and length } @text_parts, $text;
+        \@text_parts;
+
+
+
+
+
+
+
+
+
+#### test each reference part to see if it's a reference
+#### if real: canonicalize into an data object
+#### if not real: leave as original text
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # 'Text with I Pet 3:16 and Rom 12:13-14,17 references in it.'
 
 # [
@@ -378,7 +476,11 @@ sub in {
 #     ' references in it.',
 # ],
 
-        $_;
+
+
+
+
+
     } @_ );
 
     return $self;
@@ -638,6 +740,33 @@ them based on Bible order. Returns an array or arrayref depending on context.
 Returns a sort algorithm usable in a native Perl C<sort> call.
 
     my @also_sorted = sort $r->by_bible_order 'Romans', 'James 1:5', 'Romans 5';
+
+
+
+
+
+
+=head1 KNOWN ERRORS
+
+The module does its best to find things that look like valid references inside
+text.
+
+
+
+This is an example of the 1 time it might break.
+It also breaks if you mention number 7 from a list of things.
+Legal opinions of judges 3 times said this would break.
+
+
+
+
+
+
+
+
+
+
+
 
 =head1 SEE ALSO
 
