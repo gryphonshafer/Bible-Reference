@@ -636,10 +636,10 @@ full book names (which is the default) or acronyms.
 This accessor method gets and sets the boolean setting of whether or not to
 return references sorted (which is the default) or in their input order.
 
-    $r->sorted(1);                    # default
+    $r->sorting(1);                   # default
     $r->in('Jam 1:1; Rom 1:1')->refs; # returns "Romans 1:1; James 1:1"
 
-    $r->sorted(0);
+    $r->sorting(0);
     $r->in('Jam 1:1; Rom 1:1')->refs; # returns "James 1:1; Romans 1:1"
 
 =head2 in
