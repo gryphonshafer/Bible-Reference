@@ -348,14 +348,34 @@ sub BUILD {
     shift->_build_bible_data;
 }
 
-has '_bible_data',
-    is      => 'rw',
-    isa     => 'ArrayRef[ArrayRef[Str]]',
-    traits  => ['Private'];
+private_method _simple_text => sub {
+    my ( $self, $text ) = @_;
+    ( $text = lc $text ) =~ s/\s+//g;
+    return $text;
+};
+
+has '_bible_data', is => 'rw', isa => 'HashRef', traits => ['Private'];
 
 private_method _build_bible_data => sub {
     my ($self) = @_;
-    $self->_bible_data( $_bibles{ $self->bible } );
+
+    my $bible_data;
+    for my $book_data ( @{ $_bibles{ $self->bible } } ) {
+        my ( $book, @acronyms ) = @$book_data;
+
+        $bible_data->{book_to_book}{ $self->_simple_text($book) } = $book;
+        $bible_data->{book_to_acronym}{ $self->_simple_text($book) } = $acronyms[0];
+        push( @{ $bible_data->{books} }, $self->_simple_text($book) );
+
+        for (@acronyms) {
+            $bible_data->{acronym_to_book}{ $self->_simple_text($_) } = $book;
+            $bible_data->{acronym_to_acronym}{ $self->_simple_text($_) } = $acronyms[0];
+            push( @{ $bible_data->{acronyms} }, $self->_simple_text($_) );
+        }
+    }
+
+    $self->_bible_data($bible_data);
+    return;
 };
 
 has '_in',
@@ -370,74 +390,130 @@ sub in {
 
     my $book_re   = ( $self->require_book_ucfirst ) ? qr/[A-Z][A-z]*/     : qr/[A-z]+/;
     my $verses_re = ( $self->require_verse_match )  ? qr/[\d:\-,;\s]+\d+/ : qr/(?:[\d:\-,;\s]+\d+)?/;
-    my $ref_re    = qr/
-        \b(?<book>
-            (?:(?:[123]|[Ii]{1,3})\s*)?
-            $book_re
-        )
+    my $tail_re   = qr/
         (?<book_suffix>\.?\s+)
         (?<numbers_prefix>ch\.?\s)?
         (?<numbers>\d+$verses_re)
+        (?<post_text>.*)
     /x;
 
-    push( @{ $self->_in }, map {
+    my $ref_single_re = qr/
+        (?<pre_text>.*)\b
+        (?<block_text>
+            (?<book>$book_re)
+            $tail_re
+        )
+    /x;
 
-#### split up the text into text parts and possible reference parts
+    my $ref_multi_re = qr/
+        (?<pre_text>.*)\b
+        (?<block_text>
+            (?<book>
+                (?:[123]|[Ii]{1,3})\s*
+                $book_re
+            )
+            $tail_re
+        )
+    /x;
 
-        my $text = $_;
-        my @text_parts;
+    my $bible_data = $self->_bible_data;
+    my $match      = sub {
+        my ( $re, $text ) = @_;
+        my @sub_parts;
 
-        while (
-            $text =~ s/
-                $ref_re
-                (?<posttext>
-                    (?!$ref_re)
-                )
-                $
-            //x
-        ) {
+        while ( $text =~ s/$re// ) {
+            my %ref_bits = %+;
+            my ( $match, $match_type );
 
+            $ref_bits{book} =~ s/^(i{1,3})\s/length($1)/ie;
+            my $in_book_simple = $self->_simple_text( $ref_bits{book} );
 
+            # is "book" in the list of known full book names
+            if ( ($match) = grep { $in_book_simple eq $_ } @{ $bible_data->{books} } ) {
+                $match_type = 'book';
+            }
 
-print join( "\n", $+{book}, $+{numbers}, $+{posttext} ), "\n\n";
+            # is "book" in the list of known acronyms
+            elsif ( ($match) = grep { $in_book_simple eq $_ } @{ $bible_data->{acronyms} } ) {
+                $match_type = 'acronym';
+            }
 
+            # does "book" =~ /^book_full_names/
+            elsif ( ($match) = grep { /^$in_book_simple/ } @{ $bible_data->{books} } ) {
+                $match_type = 'book';
+            }
 
+            # does "book" =~ /^acronyms/
+            elsif ( ($match) = grep { /^$in_book_simple/ } @{ $bible_data->{acronyms} } ) {
+                $match = $bible_data->{
+                    ( $self->acronyms ) ? 'acronym_to_acronym' : 'acronym_to_book'
+                }{$match};
+            }
 
+            unless ($match) {
+                my $pattern = join( '.*', split( '', $in_book_simple ) );
 
-#### is "book" in the list of known full names
-#### is "book" in the list of known acronyms
-#### does "book" =~ /^full_names/
-#### does "book" =~ /^f.*u.*l.*l.*_.*n.*a.*m.*e.*s/
-#### find/use the proper full name (or acronym if we're set to use acronyms)
+                # does "book" =~ /^b.*o.*o.*k.*s/
+                if ( ($match) = grep { /^$pattern/ } @{ $bible_data->{books} } ) {
+                    $match_type = 'book';
+                }
 
-#            push( @text_parts, $+{pretext}, [ $+{book}, $+{numbers} ] );
+                # does "book" =~ /^a.*c.*r.*o.*n.*y.*m.*s/
+                elsif ( ($match) = grep { /^$pattern/ } @{ $bible_data->{acronyms} } ) {
+                    $match_type = 'acronym';
+                }
+            }
 
-            # push( @text_parts, $+{pretext} . $+{book} );
-            # $text = join( '', grep { defined and length }
-            #     $+{book_suffix},
-            #     $+{numbers_prefix},
-            #     $+{numbers},
-            #     $+{punctuation},
-            # ) . $text;
+            if ($match) {
+                if ( $match_type eq 'book' ) {
+                    $match = $bible_data->{
+                        ( $self->acronyms ) ? 'book_to_acronym' : 'book_to_book'
+                    }{$match};
+                }
+                else {
+                    $match = $bible_data->{
+                        ( $self->acronyms ) ? 'acronym_to_acronym' : 'acronym_to_book'
+                    }{$match};
+                }
+            }
+
+#### if real: canonicalize numbers into data object
+
+#### 'Text with I Pet 3:16 and Rom 12:13-14,17 references in it.'
+
+#### [
+####     'Text with ',
+####     [ '1 Peter', [[ 3, [16] ]]],
+####     ' and ',
+####     [ 'Romans', [[ 12, [ 13, 14, 17 ]]]],
+####     ' references in it.',
+#### ],
+
+            unshift(
+                @sub_parts,
+                ($match)
+                    ? ( [ $match, $ref_bits{numbers} ], $ref_bits{post_text} )
+                    : $ref_bits{block_text}
+            );
+
+            $text = $ref_bits{pre_text};
         }
 
-        @text_parts = grep { defined and length } @text_parts, $text;
-        \@text_parts;
+        return grep { defined and length } $text, @sub_parts;
+    };
 
-#### test each reference part to see if it's a reference
-#### if real: canonicalize into an data object
-#### if not real: leave as original text
+    push( @{ $self->_in }, map {
+        my @parts = map {
+            (ref) ? $_ : $match->( $ref_single_re, $_ );
+        } $match->( $ref_multi_re, $_ );
 
-# 'Text with I Pet 3:16 and Rom 12:13-14,17 references in it.'
+        for ( my $i = @parts - 1; $i > 0; $i-- ) {
+            if ( not ref $parts[ $i - 1 ] and not ref $parts[$i] ) {
+                $parts[ $i - 1 ] = $parts[ $i - 1 ] . splice( @parts, $i, 1 );
+            }
+        }
 
-# [
-#     'Text with ',
-#     [ '1 Peter', [[ 3, [16] ]]],
-#     ' and ',
-#     [ 'Romans', [[ 12, [ 13, 14, 17 ]]]],
-#     ' references in it.',
-# ],
-
+        \@parts;
     } @_ );
 
     return $self;
