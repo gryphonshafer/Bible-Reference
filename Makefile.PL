@@ -20,6 +20,7 @@ my %WriteMakefileArgs = (
     "Moose" => 0,
     "Moose::Util::TypeConstraints" => 0,
     "MooseX::Privacy" => 0,
+    "Readonly" => 0,
     "strict" => 0,
     "warnings" => 0
   },
@@ -52,6 +53,7 @@ my %FallbackPrereqs = (
   "Moose" => 0,
   "Moose::Util::TypeConstraints" => 0,
   "MooseX::Privacy" => 0,
+  "Readonly" => 0,
   "Test::Class" => 0,
   "Test::Class::Load" => 0,
   "Test::Moose" => 0,

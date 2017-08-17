@@ -43,14 +43,14 @@ version 1.01
     $r = $r->in('More text with Romans 12:16, 13:14-15 in it.'); # appends "in"
     $r = $r->clear; # clears "in" data but not anything else
 
-    my @books = $r->books;
+    my @books  = $r->books;
+    my @sorted = $r->sort( 'Romans', 'James 1:5', 'Romans 5' );
 
-    my @sorted      = $r->sort( 'Romans', 'James 1:5', 'Romans 5' );
-    my @also_sorted = sort $r->by_bible_order 'Romans', 'James 1:5', 'Romans 5';
-
-    $r->bible('Vulgate');
-    $r->acronyms(1);
-    $r->sorting(0);
+    $r->bible('Vulgate');        # switch to the Vulgate Bible
+    $r->acronyms(1);             # output acronyms instead of full book names
+    $r->sorting(0);              # deactivate sorting of references
+    $r->require_verse_match(1);  # require verses in references for matching
+    $r->require_book_ucfirst(1); # require book names to be ucfirst for matching
 
 # DESCRIPTION
 
@@ -105,11 +105,14 @@ full book names (which is the default) or acronyms.
 This accessor method gets and sets the boolean setting of whether or not to
 return references sorted (which is the default) or in their input order.
 
-    $r->sorted(1);                    # default
+    $r->sorting(1);                   # default
     $r->in('Jam 1:1; Rom 1:1')->refs; # returns "Romans 1:1; James 1:1"
 
-    $r->sorted(0);
+    $r->sorting(0);
     $r->in('Jam 1:1; Rom 1:1')->refs; # returns "James 1:1; Romans 1:1"
+
+Note that within a single given reference, chapters and verses will always be
+returned sorted and canonicalized.
 
 ## in
 
@@ -231,19 +234,27 @@ the Bible, in order.
     my @books = $r->books;
     my $books = $r->books;
 
-## sort
+# HANDLING MATCHING ERRORS
 
-Accepts a list of canonicalized Bible references and returns a sorted list of
-them based on Bible order. Returns an array or arrayref depending on context.
+By default, the module does its best to find things that look like valid
+references inside text. However, this can result in the occational matching
+error. For example, consider the following text input:
 
-    my @sorted = $r->sort( 'Romans', 'James 1:5', 'Romans 5' );
-    my $sorted = $r->sort( 'Romans', 'James 1:5', 'Romans 5' );
+    This is an example of the 1 time it might break.
+    It also breaks if you mention number 7 from a list of things.
+    Legal opinions of judges 3 times said this would break.
 
-## by\_bible\_order
+With this, we'd falsely match: Thessalonians 1, Numbers 7, and Judges 3.
 
-Returns a sort algorithm usable in a native Perl `sort` call.
+There are a couple things you can do to reduce this problem. You can optionally
+set `require_verse_match` to a true value. This will cause the matching
+algorithm to only work on reference patterns that contain what look to be
+verses.
 
-    my @also_sorted = sort $r->by_bible_order 'Romans', 'James 1:5', 'Romans 5';
+You can optionally set `require_book_ucfirst` to a true value. This will cause
+the matching algorithm to only work on reference patterns that contain what
+looks like a book that starts with a capital letter (instead of the default of
+any case).
 
 # SEE ALSO
 

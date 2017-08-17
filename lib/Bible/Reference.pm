@@ -1022,4 +1022,6 @@ You can look for additional information at:
 * L<CPANTS|http://cpants.cpanauthors.org/dist/Bible-Reference>
 * L<CPAN Testers|http://www.cpantesters.org/distro/B/Bible-Reference.html>
 
+=for Pod::Coverage BUILD
+
 =cut
