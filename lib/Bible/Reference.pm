@@ -363,16 +363,19 @@ private_method _build_bible_data => sub {
     for my $book_data ( @{ $_bibles{ $self->bible } } ) {
         my ( $book, @acronyms ) = @$book_data;
 
-        $bible_data->{book_to_book}{ $self->_simple_text($book) } = $book;
-        $bible_data->{book_to_acronym}{ $self->_simple_text($book) } = $acronyms[0];
-        push( @{ $bible_data->{books} }, $self->_simple_text($book) );
+        $bible_data->{simple_book_to_book}{ $self->_simple_text($book) } = $book;
+        $bible_data->{book_to_acronym}{$book} = $acronyms[0];
+        push( @{ $bible_data->{simple_books} }, $self->_simple_text($book) );
+        push( @{ $bible_data->{books} }, $book );
 
         for (@acronyms) {
-            $bible_data->{acronym_to_book}{ $self->_simple_text($_) } = $book;
-            $bible_data->{acronym_to_acronym}{ $self->_simple_text($_) } = $acronyms[0];
-            push( @{ $bible_data->{acronyms} }, $self->_simple_text($_) );
+            $bible_data->{simple_acronym_to_book}{ $self->_simple_text($_) } = $book;
+            push( @{ $bible_data->{simple_acronyms} }, $self->_simple_text($_) );
         }
     }
+
+    my $book_count;
+    $bible_data->{book_order} = { map { $_ => ++$book_count } @{ $bible_data->{books} } };
 
     $self->_bible_data($bible_data);
     return;
@@ -392,7 +395,7 @@ sub in {
     my $verses_re = ( $self->require_verse_match )  ? qr/[\d:\-,;\s]+\d+/ : qr/(?:[\d:\-,;\s]+\d+)?/;
     my $tail_re   = qr/
         (?<book_suffix>\.?\s+)
-        (?<numbers_prefix>ch\.?\s)?
+        (?<numbers_prefix>[cC]{1}h(?:apter)?(?:s)?\.?\s)?
         (?<numbers>\d+$verses_re)
         (?<post_text>.*)
     /x;
@@ -429,72 +432,72 @@ sub in {
             my $in_book_simple = $self->_simple_text( $ref_bits{book} );
 
             # is "book" in the list of known full book names
-            if ( ($match) = grep { $in_book_simple eq $_ } @{ $bible_data->{books} } ) {
+            if ( ($match) = grep { $in_book_simple eq $_ } @{ $bible_data->{simple_books} } ) {
                 $match_type = 'book';
             }
 
             # is "book" in the list of known acronyms
-            elsif ( ($match) = grep { $in_book_simple eq $_ } @{ $bible_data->{acronyms} } ) {
+            elsif ( ($match) = grep { $in_book_simple eq $_ } @{ $bible_data->{simple_acronyms} } ) {
                 $match_type = 'acronym';
             }
 
             # does "book" =~ /^book_full_names/
-            elsif ( ($match) = grep { /^$in_book_simple/ } @{ $bible_data->{books} } ) {
+            elsif ( ($match) = grep { /^$in_book_simple/ } @{ $bible_data->{simple_books} } ) {
                 $match_type = 'book';
             }
 
             # does "book" =~ /^acronyms/
-            elsif ( ($match) = grep { /^$in_book_simple/ } @{ $bible_data->{acronyms} } ) {
-                $match = $bible_data->{
-                    ( $self->acronyms ) ? 'acronym_to_acronym' : 'acronym_to_book'
-                }{$match};
+            elsif ( ($match) = grep { /^$in_book_simple/ } @{ $bible_data->{simple_acronyms} } ) {
+                $match = $bible_data->{'simple_acronym_to_book'}{$match};
             }
 
             unless ($match) {
                 my $pattern = join( '.*', split( '', $in_book_simple ) );
 
                 # does "book" =~ /^b.*o.*o.*k.*s/
-                if ( ($match) = grep { /^$pattern/ } @{ $bible_data->{books} } ) {
+                if ( ($match) = grep { /^$pattern/ } @{ $bible_data->{simple_books} } ) {
                     $match_type = 'book';
                 }
 
                 # does "book" =~ /^a.*c.*r.*o.*n.*y.*m.*s/
-                elsif ( ($match) = grep { /^$pattern/ } @{ $bible_data->{acronyms} } ) {
+                elsif ( ($match) = grep { /^$pattern/ } @{ $bible_data->{simple_acronyms} } ) {
                     $match_type = 'acronym';
                 }
             }
 
             if ($match) {
-                if ( $match_type eq 'book' ) {
-                    $match = $bible_data->{
-                        ( $self->acronyms ) ? 'book_to_acronym' : 'book_to_book'
-                    }{$match};
+                # fixup matched "book" to canonical book or acronym
+                $match = $bible_data->{
+                    ( $match_type eq 'book' ) ? 'simple_book_to_book' : 'simple_acronym_to_book'
+                }{$match};
+
+                # parse chapters and verses numbers
+                my @numbers_by_chapter;
+                for ( split( /\b(?=\d+\s*:\s*\d+)/, $ref_bits{numbers} ) ) {
+                    my ( $chapter, $verses ) = split( ':', $_, 2 );
+
+                    if ( length $verses ) {
+                        $chapter =~ s/\D+//g;
+                        push( @numbers_by_chapter, [$chapter] );
+                    }
+                    else {
+                        # break up ranges into individual chapter numbers
+                        $chapter =~ s/(\d+)\s*\-\s*(\d+)/ join( ',', $1 .. $2 ) /e;
+                        push( @numbers_by_chapter, map { [$_] } sort { $a <=> $b } split( /\D+/, $chapter ) );
+                    }
+
+                    if ( length $verses ) {
+                        # break up ranges into individual verse numbers
+                        $verses =~ s/(\d+)\s*\-\s*(\d+)/ join( ',', $1 .. $2 ) /e;
+                        push( @{ $numbers_by_chapter[-1] }, [ sort { $a <=> $b } split( /\D+/, $verses ) ] );
+                    }
                 }
-                else {
-                    $match = $bible_data->{
-                        ( $self->acronyms ) ? 'acronym_to_acronym' : 'acronym_to_book'
-                    }{$match};
-                }
+
+                unshift( @sub_parts, [ $match, \@numbers_by_chapter ], $ref_bits{post_text} );
             }
-
-#### if real: canonicalize numbers into data object
-
-#### 'Text with I Pet 3:16 and Rom 12:13-14,17 references in it.'
-
-#### [
-####     'Text with ',
-####     [ '1 Peter', [[ 3, [16] ]]],
-####     ' and ',
-####     [ 'Romans', [[ 12, [ 13, 14, 17 ]]]],
-####     ' references in it.',
-#### ],
-
-            unshift(
-                @sub_parts,
-                ($match)
-                    ? ( [ $match, $ref_bits{numbers} ], $ref_bits{post_text} )
-                    : $ref_bits{block_text}
-            );
+            else {
+                unshift( @sub_parts, $ref_bits{block_text} );
+            }
 
             $text = $ref_bits{pre_text};
         }
@@ -520,9 +523,229 @@ sub in {
 }
 
 sub clear {
-    my $self = shift;
+    my ($self) = @_;
     $self->_in([]);
     return $self;
+}
+
+sub books {
+    my ($self) = @_;
+    return (wantarray) ? @{ $self->_bible_data->{books} } : $self->_bible_data->{books};
+}
+
+private_method _as_hashref => sub {
+    my $self = shift;
+
+    my %refs;
+    for my $ref (@_) {
+        my $book = $ref->[0];
+
+        for my $chapter_block ( @{ $ref->[1] } ) {
+            my $chapter = $chapter_block->[0];
+
+            $refs{$book}{$chapter} //= [];
+            if ( $chapter_block->[1] ) {
+                my %verses = map { $_ => 1 } @{ $refs{$book}{$chapter} }, @{ $chapter_block->[1] };
+                $refs{$book}{$chapter} = [ sort { $a <=> $b } keys %verses ];
+            }
+        }
+    }
+
+    return \%refs;
+};
+
+has '_manual_in_refs', is => 'rw', isa => 'ArrayRef', traits => ['Private'], default => sub { [] };
+
+private_method _in_refs => sub {
+    my ($self) = @_;
+
+    unless ( @{ $self->_manual_in_refs } ) {
+        return grep { ref } map { @$_ } @{ $self->_in };
+    }
+    else {
+        my $refs = $self->_manual_in_refs;
+        $self->_manual_in_refs([]);
+        return @$refs;
+    }
+};
+
+sub as_hash {
+    my ($self) = @_;
+    my $refs = $self->_as_hashref( $self->_in_refs );
+
+    if ( $self->acronyms ) {
+        my $book_to_acronym = $self->_bible_data->{book_to_acronym};
+        $refs->{ $book_to_acronym->{$_} } = delete $refs->{$_} for ( keys %$refs );
+    }
+
+    return (wantarray) ? %$refs : $refs;
+}
+
+private_method _sort => sub {
+    my $self       = shift;
+    my $book_order = $self->_bible_data->{book_order};
+    my $refs       = $self->_as_hashref(@_);
+
+    return
+        map {
+            my $book = $_->[1];
+            [
+                $book,
+                [
+                    map {
+                        ( @{ $refs->{$book}{$_} } ) ? [ $_, $refs->{$book}{$_} ] : [$_]
+                    } sort { $a <=> $b } keys %{ $refs->{$book} }
+                ],
+            ];
+        }
+        sort { $a->[0] <=> $b->[0] }
+        map { [ $book_order->{$_}, $_ ] }
+        keys %$refs;
+};
+
+sub as_array {
+    my ($self) = @_;
+
+    my @refs = $self->_in_refs;
+    @refs = $self->_sort(@refs) if ( $self->sorting );
+
+    if ( $self->acronyms ) {
+        my $book_to_acronym = $self->_bible_data->{book_to_acronym};
+        @refs = map { $_->[0] = $book_to_acronym->{ $_->[0] }; $_ } @refs;
+    }
+
+    return (wantarray) ? @refs : \@refs;
+}
+
+sub as_verses {
+    my ($self) = @_;
+
+    my @refs;
+    for my $ref ( $self->as_array ) {
+        my $book = $ref->[0];
+
+        for my $part ( @{ $ref->[1] } ) {
+            my $chapter = $part->[0];
+
+            if ( $part->[1] ) {
+                push( @refs, "$book $chapter:$_" ) for ( @{ $part->[1] } );
+            }
+            else {
+                push( @refs, "$book $chapter" );
+            }
+        }
+    }
+
+    return (wantarray) ? @refs : \@refs;
+}
+
+private_method _compress_range => sub {
+    my $self = shift;
+
+    my ( $last, @items, @range );
+
+    my $flush_range = sub {
+        if (@range) {
+            pop @items;
+            push( @items, join( '-', $range[0], $range[-1] ) );
+            @range = ();
+        }
+    };
+
+    for my $item (@_) {
+        if ( not $last or $last + 1 != $item ) {
+            $flush_range->();
+            push( @items, $item );
+        }
+        else {
+            push( @range, $last, $item );
+        }
+
+        $last = $item;
+    }
+    $flush_range->();
+
+    return join( ', ', @items );
+};
+
+sub as_books {
+    my ($self) = @_;
+    my ( @refs, @chapters, $last_book );
+
+    my $flush_chapters = sub {
+        if (@chapters) {
+            my ($book) = @_;
+            push( @refs, "$book " . $self->_compress_range(@chapters) );
+            @chapters = ();
+        }
+    };
+
+    for my $ref ( $self->as_array ) {
+        my $book = $ref->[0];
+
+        for my $part ( @{ $ref->[1] } ) {
+            my $chapter = $part->[0];
+
+            if ( $part->[1] ) {
+                $flush_chapters->($book);
+
+                if ( not $last_book or $last_book ne $book ) {
+                    push( @refs, "$book $chapter:" . $self->_compress_range( @{ $part->[1] } ) );
+                }
+                else {
+                    $refs[-1] .= ", $chapter:" . $self->_compress_range( @{ $part->[1] } );
+                }
+            }
+            else {
+                push( @chapters, $chapter );
+            }
+        }
+
+        $flush_chapters->($book);
+        $last_book = $book;
+    }
+
+    return (wantarray) ? @refs : \@refs;
+}
+
+sub refs {
+    my ($self) = @_;
+    return join( '; ', $self->as_books );
+}
+
+sub as_text {
+    my ($self) = @_;
+
+    my @buffer;
+    my $flush_buffer = sub {
+        if (@buffer) {
+            $self->_manual_in_refs( [@buffer] );
+            @buffer = ();
+            return $self->refs;
+        }
+        else {
+            return undef;
+        }
+    };
+
+    my @text = map {
+        my @nodes;
+        for my $node (@$_) {
+            unless ( ref $node ) {
+                push( @nodes, $flush_buffer->(), $node );
+            }
+            else {
+                push( @buffer, $node );
+            }
+        }
+        push( @nodes, $flush_buffer->() );
+
+        join( '', grep { defined } @nodes );
+    } @{ $self->_in };
+
+    return
+        ( @text > 1 and wantarray )     ? @text :
+        ( @text > 1 and not wantarray ) ? \@text : join( ' ', @text );
 }
 
 1;
@@ -572,10 +795,8 @@ __END__
     $r = $r->in('More text with Romans 12:16, 13:14-15 in it.'); # appends "in"
     $r = $r->clear; # clears "in" data but not anything else
 
-    my @books = $r->books;
-
-    my @sorted      = $r->sort( 'Romans', 'James 1:5', 'Romans 5' );
-    my @also_sorted = sort $r->by_bible_order 'Romans', 'James 1:5', 'Romans 5';
+    my @books  = $r->books;
+    my @sorted = $r->sort( 'Romans', 'James 1:5', 'Romans 5' );
 
     $r->bible('Vulgate');        # switch to the Vulgate Bible
     $r->acronyms(1);             # output acronyms instead of full book names
@@ -641,6 +862,9 @@ return references sorted (which is the default) or in their input order.
 
     $r->sorting(0);
     $r->in('Jam 1:1; Rom 1:1')->refs; # returns "James 1:1; Romans 1:1"
+
+Note that within a single given reference, chapters and verses will always be
+returned sorted and canonicalized.
 
 =head2 in
 
@@ -761,20 +985,6 @@ the Bible, in order.
 
     my @books = $r->books;
     my $books = $r->books;
-
-=head2 sort
-
-Accepts a list of canonicalized Bible references and returns a sorted list of
-them based on Bible order. Returns an array or arrayref depending on context.
-
-    my @sorted = $r->sort( 'Romans', 'James 1:5', 'Romans 5' );
-    my $sorted = $r->sort( 'Romans', 'James 1:5', 'Romans 5' );
-
-=head2 by_bible_order
-
-Returns a sort algorithm usable in a native Perl C<sort> call.
-
-    my @also_sorted = sort $r->by_bible_order 'Romans', 'James 1:5', 'Romans 5';
 
 =head1 HANDLING MATCHING ERRORS
 
