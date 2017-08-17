@@ -2,8 +2,6 @@ package Bible::Reference;
 # ABSTRACT: Simple Bible reference parser, tester, and canonicalizer
 
 use 5.012;
-use strict;
-use warnings;
 
 use Moose;
 use Moose::Util::TypeConstraints;
