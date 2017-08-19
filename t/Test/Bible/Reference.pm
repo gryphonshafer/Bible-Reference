@@ -372,6 +372,87 @@ sub as_verses : Test(2) {
     );
 }
 
+sub as_runs : Test(2) {
+    my $obj = shift->{obj};
+    $obj->clear->acronyms(0);
+
+    $obj->in(
+        'Text with I Pet 3:16 and Rom 12:13-14,17 references in it plus Romans 2, 3, 4 and Romans 11:13 refs',
+        'Some text from Rom 4:15,16-19,21 and also 1 Corin 5:16, 6:17-19 and such',
+        'John 4:19, 4:2, 3:16, 4:18, 20; John 2:17-18, Rom 2:2-14, 15; John 3:19-21, 18, 17, 14, Ac 5, 6, 7, 9',
+        'Lk 3:15-17, 18; 4:5-10; Acts 20:29, 32, 35, 1 Tim 4:1, 2 Tim 4:3, 2 Pete 3:3',
+        '1 Corinthians 5:15-17, 19; Romans 4:35, 5:46, 48',
+        'Romans 1:15',
+        '',
+        'Nothing to see 42',
+    );
+
+    my $refs;
+    lives_ok( sub { $refs = $obj->as_runs }, 'as_runs lives' );
+
+    is_deeply(
+        $refs,
+        [
+            'Luke 3:15-18', 'Luke 4:5-10', 'John 2:17-18', 'John 3:14', 'John 3:16-21', 'John 4:2',
+            'John 4:18-20', 'Acts 5', 'Acts 6', 'Acts 7', 'Acts 9', 'Acts 20:29', 'Acts 20:32', 'Acts 20:35',
+            'Romans 1:15', 'Romans 2:2-15', 'Romans 3', 'Romans 4:15-19', 'Romans 4:21', 'Romans 4:35',
+            'Romans 5:46', 'Romans 5:48', 'Romans 11:13', 'Romans 12:13-14', 'Romans 12:17',
+            '1 Corinthians 5:15-17', '1 Corinthians 5:19', '1 Corinthians 6:17-19', '1 Timothy 4:1',
+            '2 Timothy 4:3', '1 Peter 3:16', '2 Peter 3:3',
+        ],
+        'as_runs data',
+    );
+}
+
+sub as_chapters : Test(2) {
+    my $obj = shift->{obj};
+    $obj->clear->acronyms(0);
+
+    $obj->in(
+        'Text with I Pet 3:16 and Rom 12:13-14,17 references in it plus Romans 2, 3, 4 and Romans 11:13 refs',
+        'Some text from Rom 4:15,16-19,21 and also 1 Corin 5:16, 6:17-19 and such',
+        'John 4:19, 4:2, 3:16, 4:18, 20; John 2:17-18, Rom 2:2-14, 15; John 3:19-21, 18, 17, 14, Ac 5, 6, 7, 9',
+        'Lk 3:15-17, 18; 4:5-10; Acts 20:29, 32, 35, 1 Tim 4:1, 2 Tim 4:3, 2 Pete 3:3',
+        '1 Corinthians 5:15-17, 19; Romans 4:35, 5:46, 48',
+        'Romans 1:15',
+        '',
+        'Nothing to see 42',
+    );
+
+    my $refs;
+    lives_ok( sub { $refs = $obj->as_chapters }, 'as_chapters lives' );
+
+    is_deeply(
+        $refs,
+        [
+            'Luke 3:15-18',
+            'Luke 4:5-10',
+            'John 2:17-18',
+            'John 3:14, 16-21',
+            'John 4:2, 18-20',
+            'Acts 5',
+            'Acts 6',
+            'Acts 7',
+            'Acts 9',
+            'Acts 20:29, 32, 35',
+            'Romans 1:15',
+            'Romans 2:2-15',
+            'Romans 3',
+            'Romans 4:15-19, 21, 35',
+            'Romans 5:46, 48',
+            'Romans 11:13',
+            'Romans 12:13-14, 17',
+            '1 Corinthians 5:15-17, 19',
+            '1 Corinthians 6:17-19',
+            '1 Timothy 4:1',
+            '2 Timothy 4:3',
+            '1 Peter 3:16',
+            '2 Peter 3:3',
+        ],
+        'as_chapters data',
+    );
+}
+
 sub as_books : Test(2) {
     my $obj = shift->{obj};
     $obj->clear->acronyms(0);
@@ -393,22 +474,12 @@ sub as_books : Test(2) {
     is_deeply(
         $refs,
         [
-            'Luke 3:15-18',
-            'Luke 4:5-10',
-            'John 2:17-18',
-            'John 3:14, 16-21',
-            'John 4:2, 18-20',
-            'Acts 5-7, 9',
-            'Acts 20:29, 32, 35',
-            'Romans 1:15',
-            'Romans 2:2-15',
-            'Romans 3',
-            'Romans 4:15-19, 21, 35',
-            'Romans 5:46, 48',
-            'Romans 11:13',
-            'Romans 12:13-14, 17',
-            '1 Corinthians 5:15-17, 19',
-            '1 Corinthians 6:17-19',
+            'Luke 3:15-18, 4:5-10',
+            'John 2:17-18, 3:14, 16-21, 4:2, 18-20',
+            'Acts 5-7, 9, 20:29, 32, 35',
+            'Romans 1:15, 2:2-15',
+            'Romans 3, 4:15-19, 21, 35, 5:46, 48, 11:13, 12:13-14, 17',
+            '1 Corinthians 5:15-17, 19, 6:17-19',
             '1 Timothy 4:1',
             '2 Timothy 4:3',
             '1 Peter 3:16',
@@ -438,11 +509,10 @@ sub refs : Test(2) {
 
     is_deeply(
         $refs,
-        'Luke 3:15-18; Luke 4:5-10; John 2:17-18; John 3:14, 16-21; John 4:2, ' .
-            '18-20; Acts 5-7, 9; Acts 20:29, 32, 35; Romans 1:15; Romans 2:2-15; ' .
-            'Romans 3; Romans 4:15-19, 21, 35; Romans 5:46, 48; Romans 11:13; Romans ' .
-            '12:13-14, 17; 1 Corinthians 5:15-17, 19; 1 Corinthians 6:17-19; 1 ' .
-            'Timothy 4:1; 2 Timothy 4:3; 1 Peter 3:16; 2 Peter 3:3',
+        'Luke 3:15-18, 4:5-10; John 2:17-18, 3:14, 16-21, 4:2, 18-20; Acts 5-7, ' .
+            '9, 20:29, 32, 35; Romans 1:15, 2:2-15; Romans 3, 4:15-19, 21, 35, ' .
+            '5:46, 48, 11:13, 12:13-14, 17; 1 Corinthians 5:15-17, 19, 6:17-19; ' .
+            '1 Timothy 4:1; 2 Timothy 4:3; 1 Peter 3:16; 2 Peter 3:3',
         'refs data',
     );
 }
@@ -469,10 +539,10 @@ sub as_text : Test(2) {
         $refs,
         [
             'Text with 1 Peter 3:16 and Romans 12:13-14, 17 references in it plus Romans 2-4 and Romans 11:13 refs',
-            'Some text from Romans 4:15-19, 21 and also 1 Corinthians 5:16; 1 Corinthians 6:17-19 and such',
-            'John 3:16; John 4:2, 18-20; John 2:17-18, Romans 2:2-15; John 3:14, 17-21, Acts 5-7, 9',
-            'Luke 3:15-18; Luke 4:5-10; Acts 20:29, 32, 35, 1 Timothy 4:1, 2 Timothy 4:3, 2 Peter 3:3',
-            '1 Corinthians 5:15-17, 19; Romans 4:35; Romans 5:46, 48',
+            'Some text from Romans 4:15-19, 21 and also 1 Corinthians 5:16, 6:17-19 and such',
+            'John 3:16, 4:2, 18-20; John 2:17-18, Romans 2:2-15; John 3:14, 17-21, Acts 5-7, 9',
+            'Luke 3:15-18, 4:5-10; Acts 20:29, 32, 35, 1 Timothy 4:1, 2 Timothy 4:3, 2 Peter 3:3',
+            '1 Corinthians 5:15-17, 19; Romans 4:35, 5:46, 48',
             'Romans 1:15',
             '',
             'Nothing to see 42',

@@ -615,31 +615,8 @@ sub as_array {
     return (wantarray) ? @refs : \@refs;
 }
 
-sub as_verses {
-    my ($self) = @_;
-
-    my @refs;
-    for my $ref ( $self->as_array ) {
-        my $book = $ref->[0];
-
-        for my $part ( @{ $ref->[1] } ) {
-            my $chapter = $part->[0];
-
-            if ( $part->[1] ) {
-                push( @refs, "$book $chapter:$_" ) for ( @{ $part->[1] } );
-            }
-            else {
-                push( @refs, "$book $chapter" );
-            }
-        }
-    }
-
-    return (wantarray) ? @refs : \@refs;
-}
-
 private_method _compress_range => sub {
-    my $self = shift;
-
+    my ( $self, $items, $join ) = @_;
     my ( $last, @items, @range );
 
     my $flush_range = sub {
@@ -650,7 +627,7 @@ private_method _compress_range => sub {
         }
     };
 
-    for my $item (@_) {
+    for my $item (@$items) {
         if ( not $last or $last + 1 != $item ) {
             $flush_range->();
             push( @items, $item );
@@ -663,17 +640,17 @@ private_method _compress_range => sub {
     }
     $flush_range->();
 
-    return join( ', ', @items );
+    return (wantarray) ? @items : join( ', ', @items );
 };
 
-sub as_books {
-    my ($self) = @_;
+private_method _as_getter => sub {
+    my ( $self, $method ) = @_;
     my ( @refs, @chapters, $last_book );
 
     my $flush_chapters = sub {
         if (@chapters) {
             my ($book) = @_;
-            push( @refs, "$book " . $self->_compress_range(@chapters) );
+            push( @refs, "$book " . $self->_compress_range( \@chapters ) );
             @chapters = ();
         }
     };
@@ -685,26 +662,69 @@ sub as_books {
             my $chapter = $part->[0];
 
             if ( $part->[1] ) {
-                $flush_chapters->($book);
-
-                if ( not $last_book or $last_book ne $book ) {
-                    push( @refs, "$book $chapter:" . $self->_compress_range( @{ $part->[1] } ) );
+                if ( $method eq 'as_verses' ) {
+                    push( @refs, "$book $chapter:$_" ) for ( @{ $part->[1] } );
                 }
-                else {
-                    $refs[-1] .= ", $chapter:" . $self->_compress_range( @{ $part->[1] } );
+                elsif ( $method eq 'as_runs' ) {
+                    push( @refs, "$book $chapter:$_") for ( $self->_compress_range( $part->[1] ) );
+                }
+                elsif ( $method eq 'as_chapters' ) {
+                    push( @refs, "$book $chapter:" . $self->_compress_range( $part->[1] ) );
+                }
+                elsif ( $method eq 'as_books' )  {
+                    $flush_chapters->($book);
+
+                    if ( not $last_book or $last_book ne $book ) {
+                        push( @refs, "$book $chapter:" . $self->_compress_range( $part->[1] ) );
+                    }
+                    else {
+                        $refs[-1] .= ", $chapter:" . $self->_compress_range( $part->[1] );
+                    }
                 }
             }
             else {
-                push( @chapters, $chapter );
+                if ( $method eq 'as_books' ) {
+                    push( @chapters, $chapter );
+                }
+                else {
+                    push( @refs, "$book $chapter" );
+                }
             }
+
+            $last_book = $book if ( $method eq 'as_books' );
         }
 
-        $flush_chapters->($book);
-        $last_book = $book;
+        $flush_chapters->($book) if ( $method eq 'as_books' );
     }
 
-    return (wantarray) ? @refs : \@refs;
+    return \@refs;
+};
+
+sub as_verses {
+    my ($self) = @_;
+    my $refs = $self->_as_getter('as_verses');
+    return (wantarray) ? @$refs : $refs;
 }
+
+sub as_runs {
+    my ($self) = @_;
+    my $refs = $self->_as_getter('as_runs');
+    return (wantarray) ? @$refs : $refs;
+}
+
+sub as_chapters {
+    my ($self) = @_;
+    my $refs = $self->_as_getter('as_chapters');
+    return (wantarray) ? @$refs : $refs;
+}
+
+
+sub as_books {
+    my ($self) = @_;
+    my $refs = $self->_as_getter('as_books');
+    return (wantarray) ? @$refs : $refs;
+}
+
 
 sub refs {
     my ($self) = @_;
@@ -746,6 +766,7 @@ sub as_text {
         ( @text > 1 and not wantarray ) ? \@text : join( ' ', @text );
 }
 
+__PACKAGE__->meta->make_immutable;
 1;
 __END__
 
