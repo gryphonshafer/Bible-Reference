@@ -37,7 +37,7 @@ sub bible_type : Test(6) {
 
     throws_ok(
         sub { $obj->bible('barf') },
-        qr/Attribute \(bible\) does not pass the type constraint/,
+        qr/^Could not determine a valid Bible type from input/,
         'fails to set bible("barf")',
     );
 }
@@ -548,6 +548,76 @@ sub as_text : Test(2) {
             'Nothing to see 42',
         ],
         'as_text data',
+    );
+}
+
+sub set_bible_data : Test(7) {
+    my $obj = shift->{obj};
+
+    throws_ok( sub { $obj->set_bible_data }, qr/^First argument/, 'set_bible_data()' );
+    throws_ok( sub { $obj->set_bible_data('Special') }, qr/^Second argument/, 'set_bible_data()' );
+    throws_ok( sub { $obj->set_bible_data( 'Special' => [
+        [ 'Genesis', 'Ge' ],
+        [ \'Genesis', \'Ge' ],
+    ] ) }, qr/^Second argument/, 'set_bible_data()' );
+
+    lives_ok( sub { $obj->set_bible_data(
+        'Special' => [
+            [ 'Genesis',         'Ge'  ],
+            [ 'Exodus',          'Ex'  ],
+            [ 'Leviticus',       'Lv'  ],
+            [ 'Numbers',         'Nu'  ],
+            [ 'Deuteronomy',     'Dt'  ],
+            [ 'Joshua',          'Jsh' ],
+            [ 'Judges',          'Jdg' ],
+            [ 'Ruth',            'Ru'  ],
+            [ '1 Samuel',        '1Sa' ],
+            [ '2 Samuel',        '2Sa' ],
+            [ '1 Kings',         '1Ki' ],
+            [ '2 Kings',         '2Ki' ],
+            [ '1 Chronicles',    '1Ch' ],
+            [ '2 Chronicles',    '2Ch' ],
+            [ 'Ezra',            'Ezr' ],
+            [ 'Nehemiah',        'Ne'  ],
+            [ 'Esther',          'Est' ],
+            [ 'Job',             'Jb'  ],
+            [ 'Psalms',          'Ps'  ],
+            [ 'Proverbs',        'Pr'  ],
+            [ 'Ecclesiastes',    'Ec'  ],
+            [ 'Song of Solomon', 'SS'  ],
+            [ 'Isaiah',          'Is'  ],
+            [ 'Jeremiah',        'Jr'  ],
+            [ 'Lamentations',    'Lm'  ],
+            [ 'Ezekiel',         'Ezk' ],
+            [ 'Daniel',          'Da'  ],
+            [ 'Hosea',           'Ho'  ],
+            [ 'Joel',            'Jl'  ],
+            [ 'Amos',            'Am'  ],
+            [ 'Obadiah',         'Ob'  ],
+            [ 'Jonah',           'Jnh' ],
+            [ 'Micah',           'Mi'  ],
+            [ 'Nahum',           'Na'  ],
+            [ 'Habakkuk',        'Hab' ],
+            [ 'Zephaniah',       'Zp'  ],
+            [ 'Haggai',          'Hg'  ],
+            [ 'Zechariah',       'Zec' ],
+            [ 'Malachi',         'Ml'  ],
+        ],
+    ) }, '"Special" Bible data set' );
+
+    is( $obj->bible, 'Special', '"Special" Bible is set' );
+
+    my @books;
+    lives_ok(
+        sub { @books = $obj->books },
+        'books lives',
+    );
+    ok(
+        @books == 39 &&
+        $books[0] eq 'Genesis' &&
+        $books[1] eq 'Exodus' &&
+        $books[-1] eq 'Malachi',
+        'books data OK',
     );
 }
 

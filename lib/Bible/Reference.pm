@@ -4,9 +4,10 @@ package Bible::Reference;
 use 5.012;
 
 use Moose;
-use Moose::Util::TypeConstraints;
 use MooseX::Privacy;
-use Readonly;
+use Carp 'croak';
+
+$Carp::Internal{$_}++ for ( __PACKAGE__, 'Class::MOP::Method::Wrapped' );
 
 # VERSION
 
@@ -15,7 +16,7 @@ has 'sorting',              is => 'rw', isa => 'Bool', default => 1;
 has 'require_verse_match',  is => 'rw', isa => 'Bool', default => 0;
 has 'require_book_ucfirst', is => 'rw', isa => 'Bool', default => 0;
 
-Readonly my %_bibles => (
+has '_bibles', is => 'rw', isa => 'HashRef', traits => ['Private'], default => sub { +{
     'Protestant' => [
         [ 'Genesis',               'Ge',   'Gn',    'Gen'          ],
         [ 'Exodus',                'Ex',   'Exo'                   ],
@@ -317,30 +318,29 @@ Readonly my %_bibles => (
         [ 'Jude',                  'Jud',  'Jude'                  ],
         [ 'Revelation',            'Rv',   'Rev'                   ],
     ],
-);
-
-subtype 'BibleType',
-    as 'Str',
-    where {
-        my $type = $_;
-        grep { $type eq $_ } keys %_bibles;
-    },
-    message {'Could not determine a valid Bible type from input'};
-
-coerce 'BibleType',
-    from 'Str',
-    via {
-        my $input = lc( substr( $_ || '', 0, 1 ) );
-        my ($type) = grep { lc( substr( $_, 0, 1 ) ) eq $input } keys %_bibles;
-        return $type;
-    };
+} };
 
 has 'bible',
-    is      => 'rw',
-    isa     => 'BibleType',
-    default => 'Protestant',
-    coerce  => 1,
-    trigger => sub { shift->_build_bible_data };
+    is          => 'rw',
+    isa         => 'Str',
+    default     => 'Protestant',
+    initializer => 'bible',
+    trigger     => sub { shift->_build_bible_data };
+
+around 'bible' => sub {
+    my $orig = shift;
+    my $self = shift;
+
+    my ( $value, $setter, $attr ) = @_;
+    return $self->$orig if ( not @_ );
+
+    my $input = lc( substr( $value || '', 0, 1 ) );
+    ($value) = grep { lc( substr( $_, 0, 1 ) ) eq $input } keys %{ $self->_bibles };
+    croak "Could not determine a valid Bible type from input" unless ($value);
+
+    return $setter->($value) if $setter;
+    return $self->$orig($value);
+};
 
 sub BUILD {
     shift->_build_bible_data;
@@ -358,7 +358,7 @@ private_method _build_bible_data => sub {
     my ($self) = @_;
 
     my $bible_data;
-    for my $book_data ( @{ $_bibles{ $self->bible } } ) {
+    for my $book_data ( @{ $self->_bibles->{ $self->bible } } ) {
         my ( $book, @acronyms ) = @$book_data;
 
         $bible_data->{simple_book_to_book}{ $self->_simple_text($book) } = $book;
@@ -766,6 +766,27 @@ sub as_text {
         ( @text > 1 and not wantarray ) ? \@text : join( ' ', @text );
 }
 
+sub set_bible_data {
+    my ( $self, $bible, $data ) = @_;
+
+    croak 'First argument to set_bible_data() must be a Bible name string'
+        unless ( $bible and not ref $bible and length $bible > 0 );
+    croak 'Second argument to set_bible_data() must be an arrayref of arrayrefs'
+        unless ( $data and ref $data eq 'ARRAY' );
+
+    for (@$data) {
+        croak 'Second argument to set_bible_data() does not appear valid' unless (
+            ref $_ eq 'ARRAY' and
+            not ref $_->[0] and length $_->[0] > 0 and
+            not ref $_->[1] and length $_->[1] > 0
+        );
+    }
+
+    $self->_bibles->{$bible} = $data;
+    $self->bible($bible);
+    return $self;
+}
+
 __PACKAGE__->meta->make_immutable;
 1;
 __END__
@@ -1004,6 +1025,32 @@ the Bible, in order.
 
     my @books = $r->books;
     my $books = $r->books;
+
+=head2 set_bible_data
+
+If the preset Bibles are not going to cover your own needs, you can set your own
+Bible data for use within the module with this method. It returns the
+instantiated object, so you can chain it like so:
+
+    my $r = Bible::Reference->new->set_bible_data(
+        'Special' => [
+            [ 'Genesis',     'Ge', 'Gn', 'Gen' ],
+            [ 'Exodus',      'Ex', 'Exo'       ],
+            [ 'Leviticus',   'Lv', 'Lev'       ],
+            [ 'Numbers',     'Nu', 'Nm', 'Num' ],
+            [ 'Deuteronomy', 'Dt', 'Deu'       ],
+        ],
+    );
+
+The method expects two inputs: a string that will be used as the label for the
+Bible and an arrayref of arrayrefs. Each sub-arrayref must contain at least 2
+strings: the first being the full-name of the book, and the second the
+canonical acronym. Subsequent matching acronyms can optionally be added. These
+are acronyms that if found will match to the book, in addition to the canoniocal
+acronym.
+
+When you call this method with good input, it will save the new Bible and
+internally call C<bible()> to set the new Bible as active.
 
 =head1 HANDLING MATCHING ERRORS
 
