@@ -4,7 +4,7 @@ Bible::Reference - Simple Bible reference parser, tester, and canonicalizer
 
 # VERSION
 
-version 1.01
+version 1.02
 
 [![Build Status](https://travis-ci.org/gryphonshafer/Bible-Reference.svg)](https://travis-ci.org/gryphonshafer/Bible-Reference)
 [![Coverage Status](https://coveralls.io/repos/gryphonshafer/Bible-Reference/badge.png)](https://coveralls.io/r/gryphonshafer/Bible-Reference)
@@ -233,6 +233,32 @@ the Bible, in order.
 
     my @books = $r->books;
     my $books = $r->books;
+
+## set\_bible\_data
+
+If the preset Bibles are not going to cover your own needs, you can set your own
+Bible data for use within the module with this method. It returns the
+instantiated object, so you can chain it like so:
+
+    my $r = Bible::Reference->new->set_bible_data(
+        'Special' => [
+            [ 'Genesis',     'Ge', 'Gn', 'Gen' ],
+            [ 'Exodus',      'Ex', 'Exo'       ],
+            [ 'Leviticus',   'Lv', 'Lev'       ],
+            [ 'Numbers',     'Nu', 'Nm', 'Num' ],
+            [ 'Deuteronomy', 'Dt', 'Deu'       ],
+        ],
+    );
+
+The method expects two inputs: a string that will be used as the label for the
+Bible and an arrayref of arrayrefs. Each sub-arrayref must contain at least 2
+strings: the first being the full-name of the book, and the second the
+canonical acronym. Subsequent matching acronyms can optionally be added. These
+are acronyms that if found will match to the book, in addition to the canoniocal
+acronym.
+
+When you call this method with good input, it will save the new Bible and
+internally call `bible()` to set the new Bible as active.
 
 # HANDLING MATCHING ERRORS
 
