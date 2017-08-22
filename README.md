@@ -170,6 +170,20 @@ This method is the same as `refs` except that it returns a list or arrayref
     my @books = $r->as_books;
     # 'Romans 12:13-14, 17', '1 Peter 3:16'
 
+## as\_chapters
+
+This method is the same as `as_books` except that it returns a list or arrayref
+(depending on context) of canonicalized references by book and chapter.
+
+## as\_runs
+
+This method is the same as `as_chapters` except that it returns a list or
+arrayref (depending on context) of canonicalized references by verse run. A
+"verse run" is a set of verses in an unbroken list together.
+
+    my $books = $r->as_runs;
+    # [ 'Romans 12:13-14', 'Romans 12:17', '1 Peter 3:16' ]
+
 ## as\_verses
 
 This method is the same as `as_books` except that it returns a list or arrayref
