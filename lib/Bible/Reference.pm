@@ -1094,9 +1094,7 @@ You can look for additional information at:
 
 =for :list
 * L<GitHub|https://github.com/gryphonshafer/Bible-Reference>
-* L<CPAN|http://search.cpan.org/dist/Bible-Reference>
 * L<MetaCPAN|https://metacpan.org/pod/Bible::Reference>
-* L<AnnoCPAN|http://annocpan.org/dist/Bible-Reference>
 * L<Travis CI|https://travis-ci.org/gryphonshafer/Bible-Reference>
 * L<Coveralls|https://coveralls.io/r/gryphonshafer/Bible-Reference>
 * L<CPANTS|http://cpants.cpanauthors.org/dist/Bible-Reference>
