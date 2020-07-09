@@ -1,22 +1,19 @@
 package Bible::Reference;
 # ABSTRACT: Simple Bible reference parser, tester, and canonicalizer
 
-use 5.012;
+use 5.014;
 
-use Moose;
-use MooseX::Privacy;
-use Carp 'croak';
-
-$Carp::Internal{$_}++ for ( __PACKAGE__, 'Class::MOP::Method::Wrapped' );
+use exact;
+use exact::class;
 
 # VERSION
 
-has 'acronyms',             is => 'rw', isa => 'Bool', default => 0;
-has 'sorting',              is => 'rw', isa => 'Bool', default => 1;
-has 'require_verse_match',  is => 'rw', isa => 'Bool', default => 0;
-has 'require_book_ucfirst', is => 'rw', isa => 'Bool', default => 0;
+has acronyms             => 0;
+has sorting              => 1;
+has require_verse_match  => 0;
+has require_book_ucfirst => 0;
 
-has '_bibles', is => 'rw', isa => 'HashRef', traits => ['Private'], default => sub { +{
+has _bibles => {
     'Protestant' => [
         [ 'Genesis',               'Ge',   'Gn',    'Gen'          ],
         [ 'Exodus',                'Ex',   'Exo'                   ],
@@ -318,76 +315,55 @@ has '_bibles', is => 'rw', isa => 'HashRef', traits => ['Private'], default => s
         [ 'Jude',                  'Jud',  'Jude'                  ],
         [ 'Revelation',            'Rv',   'Rev'                   ],
     ],
-} };
-
-has 'bible',
-    is          => 'rw',
-    isa         => 'Str',
-    default     => 'Protestant',
-    initializer => 'bible',
-    trigger     => sub { shift->_build_bible_data };
-
-around 'bible' => sub {
-    my $orig = shift;
-    my $self = shift;
-
-    my ( $value, $setter, $attr ) = @_;
-    return $self->$orig if ( not @_ );
-
-    my $input = lc( substr( $value || '', 0, 1 ) );
-    ($value) = grep { lc( substr( $_, 0, 1 ) ) eq $input } keys %{ $self->_bibles };
-    croak "Could not determine a valid Bible type from input" unless ($value);
-
-    return $setter->($value) if $setter;
-    return $self->$orig($value);
 };
 
-sub BUILD {
-    shift->_build_bible_data;
-}
-
-private_method _simple_text => sub {
-    my ( $self, $text ) = @_;
+sub _simple_text ($text) {
     ( $text = lc $text ) =~ s/\s+//g;
     return $text;
-};
+}
 
-has '_bible_data', is => 'rw', isa => 'HashRef', traits => ['Private'];
+has _bible      => 'Protestant';
+has _bible_data => {};
 
-private_method _build_bible_data => sub {
-    my ($self) = @_;
+sub bible ( $self, $name = undef ) {
+    return $self->_bible unless ($name);
+
+    my $input = lc( substr( $name || '', 0, 1 ) );
+    my ($bible) = grep { lc( substr( $_, 0, 1 ) ) eq $input } keys %{ $self->_bibles };
+    croak "Could not determine a valid Bible type from input" unless ($bible);
+    $self->_bible($bible);
 
     my $bible_data;
-    for my $book_data ( @{ $self->_bibles->{ $self->bible } } ) {
+    for my $book_data ( @{ $self->_bibles->{ $self->_bible } } ) {
         my ( $book, @acronyms ) = @$book_data;
 
-        $bible_data->{simple_book_to_book}{ $self->_simple_text($book) } = $book;
+        $bible_data->{simple_book_to_book}{ _simple_text($book) } = $book;
         $bible_data->{book_to_acronym}{$book} = $acronyms[0];
-        push( @{ $bible_data->{simple_books} }, $self->_simple_text($book) );
+        push( @{ $bible_data->{simple_books} }, _simple_text($book) );
         push( @{ $bible_data->{books} }, $book );
 
         for (@acronyms) {
-            $bible_data->{simple_acronym_to_book}{ $self->_simple_text($_) } = $book;
-            push( @{ $bible_data->{simple_acronyms} }, $self->_simple_text($_) );
+            $bible_data->{simple_acronym_to_book}{ _simple_text($_) } = $book;
+            push( @{ $bible_data->{simple_acronyms} }, _simple_text($_) );
         }
     }
-
     my $book_count;
     $bible_data->{book_order} = { map { $_ => ++$book_count } @{ $bible_data->{books} } };
-
     $self->_bible_data($bible_data);
-    return;
-};
 
-has '_in',
-    is      => 'rw',
-    isa     => 'ArrayRef[Str]',
-    traits  => ['Private'],
-    default => sub { [] };
+    return $bible;
+}
 
-sub in {
-    my $self = shift;
-    return $self->_in unless (@_);
+sub new ( $self, %params ) {
+    $self = $self->SUPER::new(%params);
+    $self->bible( $params{bible} || $self->_bible );
+    return $self;
+}
+
+has _in => [];
+
+sub in ( $self, @input ) {
+    return $self->_in unless (@input);
 
     my $book_re   = ( $self->require_book_ucfirst ) ? qr/[A-Z][A-z]*/     : qr/[A-z]+/;
     my $verses_re = ( $self->require_verse_match )  ? qr/[\d:\-,;\s]+\d+/ : qr/(?:[\d:\-,;\s]+\d+)?/;
@@ -427,7 +403,7 @@ sub in {
             my ( $match, $match_type );
 
             $ref_bits{book} =~ s/^(i{1,3})\s/length($1)/ie;
-            my $in_book_simple = $self->_simple_text( $ref_bits{book} );
+            my $in_book_simple = _simple_text( $ref_bits{book} );
 
             # is "book" in the list of known full book names
             if ( ($match) = grep { $in_book_simple eq $_ } @{ $bible_data->{simple_books} } ) {
@@ -515,25 +491,21 @@ sub in {
         }
 
         \@parts;
-    } @_ );
+    } @input );
 
     return $self;
 }
 
-sub clear {
-    my ($self) = @_;
+sub clear ($self) {
     $self->_in([]);
     return $self;
 }
 
-sub books {
-    my ($self) = @_;
+sub books ($self) {
     return (wantarray) ? @{ $self->_bible_data->{books} } : $self->_bible_data->{books};
 }
 
-private_method _as_hashref => sub {
-    my $self = shift;
-
+sub _as_hashref {
     my %refs;
     for my $ref (@_) {
         my $book = $ref->[0];
@@ -550,13 +522,11 @@ private_method _as_hashref => sub {
     }
 
     return \%refs;
-};
+}
 
-has '_manual_in_refs', is => 'rw', isa => 'ArrayRef', traits => ['Private'], default => sub { [] };
+has _manual_in_refs => [];
 
-private_method _in_refs => sub {
-    my ($self) = @_;
-
+sub _in_refs ($self) {
     unless ( @{ $self->_manual_in_refs } ) {
         return grep { ref } map { @$_ } @{ $self->_in };
     }
@@ -565,11 +535,10 @@ private_method _in_refs => sub {
         $self->_manual_in_refs([]);
         return @$refs;
     }
-};
+}
 
-sub as_hash {
-    my ($self) = @_;
-    my $refs = $self->_as_hashref( $self->_in_refs );
+sub as_hash ($self) {
+    my $refs = _as_hashref( $self->_in_refs );
 
     if ( $self->acronyms ) {
         my $book_to_acronym = $self->_bible_data->{book_to_acronym};
@@ -579,10 +548,9 @@ sub as_hash {
     return (wantarray) ? %$refs : $refs;
 }
 
-private_method _sort => sub {
-    my $self       = shift;
+sub _sort ( $self, @input ) {
     my $book_order = $self->_bible_data->{book_order};
-    my $refs       = $self->_as_hashref(@_);
+    my $refs       = _as_hashref(@input);
 
     return
         map {
@@ -599,11 +567,9 @@ private_method _sort => sub {
         sort { $a->[0] <=> $b->[0] }
         map { [ $book_order->{$_}, $_ ] }
         keys %$refs;
-};
+}
 
-sub as_array {
-    my ($self) = @_;
-
+sub as_array ($self) {
     my @refs = $self->_in_refs;
     @refs = $self->_sort(@refs) if ( $self->sorting );
 
@@ -615,8 +581,7 @@ sub as_array {
     return (wantarray) ? @refs : \@refs;
 }
 
-private_method _compress_range => sub {
-    my ( $self, $items, $join ) = @_;
+sub _compress_range ($items) {
     my ( $last, @items, @range );
 
     my $flush_range = sub {
@@ -641,16 +606,15 @@ private_method _compress_range => sub {
     $flush_range->();
 
     return (wantarray) ? @items : join( ', ', @items );
-};
+}
 
-private_method _as_getter => sub {
-    my ( $self, $method ) = @_;
+sub _as_getter ( $self, $method ) {
     my ( @refs, @chapters, $last_book );
 
     my $flush_chapters = sub {
         if (@chapters) {
             my ($book) = @_;
-            push( @refs, "$book " . $self->_compress_range( \@chapters ) );
+            push( @refs, "$book " . _compress_range( \@chapters ) );
             @chapters = ();
         }
     };
@@ -666,19 +630,19 @@ private_method _as_getter => sub {
                     push( @refs, "$book $chapter:$_" ) for ( @{ $part->[1] } );
                 }
                 elsif ( $method eq 'as_runs' ) {
-                    push( @refs, "$book $chapter:$_") for ( $self->_compress_range( $part->[1] ) );
+                    push( @refs, "$book $chapter:$_") for ( _compress_range( $part->[1] ) );
                 }
                 elsif ( $method eq 'as_chapters' ) {
-                    push( @refs, "$book $chapter:" . $self->_compress_range( $part->[1] ) );
+                    push( @refs, "$book $chapter:" . _compress_range( $part->[1] ) );
                 }
                 elsif ( $method eq 'as_books' )  {
                     $flush_chapters->($book);
 
                     if ( not $last_book or $last_book ne $book ) {
-                        push( @refs, "$book $chapter:" . $self->_compress_range( $part->[1] ) );
+                        push( @refs, "$book $chapter:" . _compress_range( $part->[1] ) );
                     }
                     else {
-                        $refs[-1] .= ", $chapter:" . $self->_compress_range( $part->[1] );
+                        $refs[-1] .= ", $chapter:" . _compress_range( $part->[1] );
                     }
                 }
             }
@@ -698,42 +662,33 @@ private_method _as_getter => sub {
     }
 
     return \@refs;
-};
+}
 
-sub as_verses {
-    my ($self) = @_;
+sub as_verses ($self) {
     my $refs = $self->_as_getter('as_verses');
     return (wantarray) ? @$refs : $refs;
 }
 
-sub as_runs {
-    my ($self) = @_;
+sub as_runs ($self) {
     my $refs = $self->_as_getter('as_runs');
     return (wantarray) ? @$refs : $refs;
 }
 
-sub as_chapters {
-    my ($self) = @_;
+sub as_chapters ($self) {
     my $refs = $self->_as_getter('as_chapters');
     return (wantarray) ? @$refs : $refs;
 }
 
-
-sub as_books {
-    my ($self) = @_;
+sub as_books ($self) {
     my $refs = $self->_as_getter('as_books');
     return (wantarray) ? @$refs : $refs;
 }
 
-
-sub refs {
-    my ($self) = @_;
+sub refs ($self) {
     return join( '; ', $self->as_books );
 }
 
-sub as_text {
-    my ($self) = @_;
-
+sub as_text ($self) {
     my @buffer;
     my $flush_buffer = sub {
         if (@buffer) {
@@ -766,9 +721,7 @@ sub as_text {
         ( @text > 1 and not wantarray ) ? \@text : join( ' ', @text );
 }
 
-sub set_bible_data {
-    my ( $self, $bible, $data ) = @_;
-
+sub set_bible_data ( $self, $bible = undef, $data = undef ) {
     croak 'First argument to set_bible_data() must be a Bible name string'
         unless ( $bible and not ref $bible and length $bible > 0 );
     croak 'Second argument to set_bible_data() must be an arrayref of arrayrefs'
@@ -787,7 +740,6 @@ sub set_bible_data {
     return $self;
 }
 
-__PACKAGE__->meta->make_immutable;
 1;
 __END__
 

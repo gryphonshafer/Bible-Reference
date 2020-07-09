@@ -1,6 +1,7 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+        - Remove Moose dependency; replace with exact and exact::class
         - Update Travis YAML
         - Adding Perl versions to test; annual general update for 2018
 
