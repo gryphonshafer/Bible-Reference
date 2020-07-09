@@ -1,6 +1,7 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+        - Remove subroutine signatures to allow operation back to Perl 5.14
 
 1.03      2020-07-08 18:13:37-07:00 America/Los_Angeles
         - Remove Moose dependency; replace with exact and exact::class

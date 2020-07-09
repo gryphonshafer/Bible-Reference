@@ -317,7 +317,8 @@ has _bibles => {
     ],
 };
 
-sub _simple_text ($text) {
+sub _simple_text {
+    my ($text) = @_;
     ( $text = lc $text ) =~ s/\s+//g;
     return $text;
 }
@@ -325,7 +326,9 @@ sub _simple_text ($text) {
 has _bible      => 'Protestant';
 has _bible_data => {};
 
-sub bible ( $self, $name = undef ) {
+sub bible {
+    my ( $self, $name ) = @_;
+
     return $self->_bible unless ($name);
 
     my $input = lc( substr( $name || '', 0, 1 ) );
@@ -354,7 +357,8 @@ sub bible ( $self, $name = undef ) {
     return $bible;
 }
 
-sub new ( $self, %params ) {
+sub new {
+    my ( $self, %params ) = @_;
     $self = $self->SUPER::new(%params);
     $self->bible( $params{bible} || $self->_bible );
     return $self;
@@ -362,7 +366,8 @@ sub new ( $self, %params ) {
 
 has _in => [];
 
-sub in ( $self, @input ) {
+sub in {
+    my ( $self, @input ) = @_;
     return $self->_in unless (@input);
 
     my $book_re   = ( $self->require_book_ucfirst ) ? qr/[A-Z][A-z]*/     : qr/[A-z]+/;
@@ -496,12 +501,14 @@ sub in ( $self, @input ) {
     return $self;
 }
 
-sub clear ($self) {
+sub clear {
+    my ($self) = @_;
     $self->_in([]);
     return $self;
 }
 
-sub books ($self) {
+sub books {
+    my ($self) = @_;
     return (wantarray) ? @{ $self->_bible_data->{books} } : $self->_bible_data->{books};
 }
 
@@ -526,7 +533,8 @@ sub _as_hashref {
 
 has _manual_in_refs => [];
 
-sub _in_refs ($self) {
+sub _in_refs {
+    my ($self) = @_;
     unless ( @{ $self->_manual_in_refs } ) {
         return grep { ref } map { @$_ } @{ $self->_in };
     }
@@ -537,7 +545,8 @@ sub _in_refs ($self) {
     }
 }
 
-sub as_hash ($self) {
+sub as_hash {
+    my ($self) = @_;
     my $refs = _as_hashref( $self->_in_refs );
 
     if ( $self->acronyms ) {
@@ -548,7 +557,8 @@ sub as_hash ($self) {
     return (wantarray) ? %$refs : $refs;
 }
 
-sub _sort ( $self, @input ) {
+sub _sort {
+    my ( $self, @input ) = @_;
     my $book_order = $self->_bible_data->{book_order};
     my $refs       = _as_hashref(@input);
 
@@ -569,7 +579,8 @@ sub _sort ( $self, @input ) {
         keys %$refs;
 }
 
-sub as_array ($self) {
+sub as_array {
+    my ($self) = @_;
     my @refs = $self->_in_refs;
     @refs = $self->_sort(@refs) if ( $self->sorting );
 
@@ -581,7 +592,8 @@ sub as_array ($self) {
     return (wantarray) ? @refs : \@refs;
 }
 
-sub _compress_range ($items) {
+sub _compress_range {
+    my ($items) = @_;
     my ( $last, @items, @range );
 
     my $flush_range = sub {
@@ -608,7 +620,8 @@ sub _compress_range ($items) {
     return (wantarray) ? @items : join( ', ', @items );
 }
 
-sub _as_getter ( $self, $method ) {
+sub _as_getter {
+    my ( $self, $method ) = @_;
     my ( @refs, @chapters, $last_book );
 
     my $flush_chapters = sub {
@@ -664,31 +677,37 @@ sub _as_getter ( $self, $method ) {
     return \@refs;
 }
 
-sub as_verses ($self) {
+sub as_verses {
+    my ($self) = @_;
     my $refs = $self->_as_getter('as_verses');
     return (wantarray) ? @$refs : $refs;
 }
 
-sub as_runs ($self) {
+sub as_runs {
+    my ($self) = @_;
     my $refs = $self->_as_getter('as_runs');
     return (wantarray) ? @$refs : $refs;
 }
 
-sub as_chapters ($self) {
+sub as_chapters {
+    my ($self) = @_;
     my $refs = $self->_as_getter('as_chapters');
     return (wantarray) ? @$refs : $refs;
 }
 
-sub as_books ($self) {
+sub as_books {
+    my ($self) = @_;
     my $refs = $self->_as_getter('as_books');
     return (wantarray) ? @$refs : $refs;
 }
 
-sub refs ($self) {
+sub refs {
+    my ($self) = @_;
     return join( '; ', $self->as_books );
 }
 
-sub as_text ($self) {
+sub as_text {
+    my ($self) = @_;
     my @buffer;
     my $flush_buffer = sub {
         if (@buffer) {
@@ -721,7 +740,8 @@ sub as_text ($self) {
         ( @text > 1 and not wantarray ) ? \@text : join( ' ', @text );
 }
 
-sub set_bible_data ( $self, $bible = undef, $data = undef ) {
+sub set_bible_data {
+    my ( $self, $bible, $data ) = @_;
     croak 'First argument to set_bible_data() must be a Bible name string'
         unless ( $bible and not ref $bible and length $bible > 0 );
     croak 'Second argument to set_bible_data() must be an arrayref of arrayrefs'
