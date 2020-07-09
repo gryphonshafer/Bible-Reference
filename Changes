@@ -3,7 +3,6 @@ Revision history for Bible::Reference
 {{$NEXT}}
         - Remove Moose dependency; replace with exact and exact::class
         - Update Travis YAML
-        - Adding Perl versions to test; annual general update for 2018
 
 1.02      2017-08-21 18:13:34-07:00 America/Los_Angeles
         - Add as_chapters() and as_runs() methods
