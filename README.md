@@ -301,9 +301,7 @@ any case).
 You can look for additional information at:
 
 - [GitHub](https://github.com/gryphonshafer/Bible-Reference)
-- [CPAN](http://search.cpan.org/dist/Bible-Reference)
 - [MetaCPAN](https://metacpan.org/pod/Bible::Reference)
-- [AnnoCPAN](http://annocpan.org/dist/Bible-Reference)
 - [Travis CI](https://travis-ci.org/gryphonshafer/Bible-Reference)
 - [Coveralls](https://coveralls.io/r/gryphonshafer/Bible-Reference)
 - [CPANTS](http://cpants.cpanauthors.org/dist/Bible-Reference)
@@ -315,7 +313,7 @@ Gryphon Shafer <gryphon@cpan.org>
 
 # COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2018 by Gryphon Shafer.
+This software is copyright (c) 2020 by Gryphon Shafer.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
