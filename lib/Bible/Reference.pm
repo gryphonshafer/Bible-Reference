@@ -364,11 +364,11 @@ sub new {
     return $self;
 }
 
-has _in => [];
+has _data => [];
 
 sub in {
     my ( $self, @input ) = @_;
-    return $self->_in unless (@input);
+    return $self unless (@input);
 
     my $book_re   = ( $self->require_book_ucfirst ) ? qr/[A-Z][A-z]*/     : qr/[A-z]+/;
     my $verses_re = ( $self->require_verse_match )  ? qr/[\d:\-,;\s]+\d+/ : qr/(?:[\d:\-,;\s]+\d+)?/;
@@ -484,7 +484,7 @@ sub in {
         return grep { defined and length } $text, @sub_parts;
     };
 
-    push( @{ $self->_in }, map {
+    push( @{ $self->_data }, map {
         my @parts = map {
             (ref) ? $_ : $match->( $ref_single_re, $_ );
         } $match->( $ref_multi_re, $_ );
@@ -503,7 +503,7 @@ sub in {
 
 sub clear {
     my ($self) = @_;
-    $self->_in([]);
+    $self->_data([]);
     return $self;
 }
 
@@ -536,7 +536,7 @@ has _manual_in_refs => [];
 sub _in_refs {
     my ($self) = @_;
     unless ( @{ $self->_manual_in_refs } ) {
-        return grep { ref } map { @$_ } @{ $self->_in };
+        return grep { ref } map { @$_ } @{ $self->_data };
     }
     else {
         my $refs = $self->_manual_in_refs;
@@ -733,7 +733,7 @@ sub as_text {
         push( @nodes, $flush_buffer->() );
 
         join( '', grep { defined } @nodes );
-    } @{ $self->_in };
+    } @{ $self->_data };
 
     return
         ( @text > 1 and wantarray )     ? @text :

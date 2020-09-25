@@ -15,13 +15,12 @@ sub instantiation : Test( startup => 4 ) {
     shift->{obj} = $obj;
 }
 
-sub attributes_and_classes : Test(7) { # 8
+sub attributes_and_classes : Test(6) {
     my $obj = shift->{obj};
     can_ok( $obj, $_ ) for ( qw(
-        acronyms sorting bible
+        acronyms sorting bible in
         require_verse_match require_book_ucfirst
     ) );
-    can_ok( $obj, $_ ) for ( qw( _in in ) );
 }
 
 sub bible_type : Test(6) {
@@ -48,14 +47,14 @@ sub in_and_clear : Test(10) {
         'clear lives',
     );
 
-    is_deeply( $obj->in, [], 'in() is empty' );
+    is_deeply( $obj->_data, [], 'in() is empty' );
 
     lives_ok(
         sub { $obj->in('Text with I Pet 3:16 and Rom 12:13-14,17 references in it.') },
         'in("text") lives',
     );
 
-    is_deeply( $obj->in, [
+    is_deeply( $obj->_data, [
         [
             'Text with ',
             [ '1 Peter', [ [ 3, [16] ] ] ],
@@ -70,7 +69,7 @@ sub in_and_clear : Test(10) {
         'in("text 2") lives',
     );
 
-    is_deeply( $obj->in, [
+    is_deeply( $obj->_data, [
         [
             'Text with ',
             [ '1 Peter', [ [ 3, [16] ] ] ],
@@ -91,7 +90,7 @@ sub in_and_clear : Test(10) {
         'in( "text 3", "text 4" ) lives',
     );
 
-    is_deeply( $obj->in, [
+    is_deeply( $obj->_data, [
         [
             'Text with ',
             [ '1 Peter', [ [ 3, [16] ] ] ],
@@ -109,29 +108,29 @@ sub in_and_clear : Test(10) {
         'clear lives',
     );
 
-    is_deeply( $obj->in, [], 'in() is empty' );
+    is_deeply( $obj->_data, [], '_data is empty' );
 }
 
 sub require_settings : Test(4) {
     my $obj = shift->{obj};
 
     $obj->clear->require_book_ucfirst(1);
-    is_deeply( $obj->in('header romans 12:13 footer')->in, [
+    is_deeply( $obj->in('header romans 12:13 footer')->_data, [
         ['header romans 12:13 footer'],
     ], '"romans 12:13" and require_book_ucfirst(0)' );
 
     $obj->clear->require_book_ucfirst(0);
-    is_deeply( $obj->in('header romans 12:13 footer')->in, [
+    is_deeply( $obj->in('header romans 12:13 footer')->_data, [
         [ 'header ', [ 'Romans', [[ 12, [13]]]], ' footer' ],
     ], '"romans 12:13" and require_book_ucfirst(1)' );
 
     $obj->clear->require_verse_match(1);
-    is_deeply( $obj->in('header romans 12 footer')->in, [
+    is_deeply( $obj->in('header romans 12 footer')->_data, [
         ['header romans 12 footer'],
     ], '"romans 12" and require_verse_match(1)' );
 
     $obj->clear->require_verse_match(0);
-    is_deeply( $obj->in('header romans 12 footer')->in, [
+    is_deeply( $obj->in('header romans 12 footer')->_data, [
         [ 'header ', [ 'Romans', [[12]]], ' footer' ],
     ], '"romans 12" and require_verse_match(0)' );
 }
