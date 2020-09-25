@@ -317,8 +317,7 @@ has _bibles => {
     ],
 };
 
-sub _simple_text {
-    my ($text) = @_;
+sub _simple_text ( $text = '' ) {
     ( $text = lc $text ) =~ s/\s+//g;
     return $text;
 }
@@ -326,9 +325,7 @@ sub _simple_text {
 has _bible      => 'Protestant';
 has _bible_data => {};
 
-sub bible {
-    my ( $self, $name ) = @_;
-
+sub bible ( $self, $name = undef ) {
     return $self->_bible unless ($name);
 
     my $input = lc( substr( $name || '', 0, 1 ) );
@@ -357,8 +354,7 @@ sub bible {
     return $bible;
 }
 
-sub new {
-    my ( $self, %params ) = @_;
+sub new ( $self, %params ) {
     $self = $self->SUPER::new(%params);
     $self->bible( $params{bible} || $self->_bible );
     return $self;
@@ -366,8 +362,7 @@ sub new {
 
 has _data => [];
 
-sub in {
-    my ( $self, @input ) = @_;
+sub in ( $self, @input ) {
     return $self unless (@input);
 
     my $book_re   = ( $self->require_book_ucfirst ) ? qr/[A-Z][A-z]*/     : qr/[A-z]+/;
@@ -501,14 +496,12 @@ sub in {
     return $self;
 }
 
-sub clear {
-    my ($self) = @_;
+sub clear ($self) {
     $self->_data([]);
     return $self;
 }
 
-sub books {
-    my ($self) = @_;
+sub books ($self) {
     return (wantarray) ? @{ $self->_bible_data->{books} } : $self->_bible_data->{books};
 }
 
@@ -533,8 +526,7 @@ sub _as_hashref {
 
 has _manual_in_refs => [];
 
-sub _in_refs {
-    my ($self) = @_;
+sub _in_refs ($self) {
     unless ( @{ $self->_manual_in_refs } ) {
         return grep { ref } map { @$_ } @{ $self->_data };
     }
@@ -545,8 +537,7 @@ sub _in_refs {
     }
 }
 
-sub as_hash {
-    my ($self) = @_;
+sub as_hash ($self) {
     my $refs = _as_hashref( $self->_in_refs );
 
     if ( $self->acronyms ) {
@@ -557,8 +548,7 @@ sub as_hash {
     return (wantarray) ? %$refs : $refs;
 }
 
-sub _sort {
-    my ( $self, @input ) = @_;
+sub _sort ( $self, @input ) {
     my $book_order = $self->_bible_data->{book_order};
     my $refs       = _as_hashref(@input);
 
@@ -579,8 +569,7 @@ sub _sort {
         keys %$refs;
 }
 
-sub as_array {
-    my ($self) = @_;
+sub as_array ($self) {
     my @refs = $self->_in_refs;
     @refs = $self->_sort(@refs) if ( $self->sorting );
 
@@ -592,8 +581,7 @@ sub as_array {
     return (wantarray) ? @refs : \@refs;
 }
 
-sub _compress_range {
-    my ($items) = @_;
+sub _compress_range ( $items = [] ) {
     my ( $last, @items, @range );
 
     my $flush_range = sub {
@@ -620,8 +608,7 @@ sub _compress_range {
     return (wantarray) ? @items : join( ', ', @items );
 }
 
-sub _as_getter {
-    my ( $self, $method ) = @_;
+sub _as_getter ( $self, $method = undef ) {
     my ( @refs, @chapters, $last_book );
 
     my $flush_chapters = sub {
@@ -677,37 +664,31 @@ sub _as_getter {
     return \@refs;
 }
 
-sub as_verses {
-    my ($self) = @_;
+sub as_verses ($self) {
     my $refs = $self->_as_getter('as_verses');
     return (wantarray) ? @$refs : $refs;
 }
 
-sub as_runs {
-    my ($self) = @_;
+sub as_runs ($self) {
     my $refs = $self->_as_getter('as_runs');
     return (wantarray) ? @$refs : $refs;
 }
 
-sub as_chapters {
-    my ($self) = @_;
+sub as_chapters ($self) {
     my $refs = $self->_as_getter('as_chapters');
     return (wantarray) ? @$refs : $refs;
 }
 
-sub as_books {
-    my ($self) = @_;
+sub as_books ($self) {
     my $refs = $self->_as_getter('as_books');
     return (wantarray) ? @$refs : $refs;
 }
 
-sub refs {
-    my ($self) = @_;
+sub refs ($self) {
     return join( '; ', $self->as_books );
 }
 
-sub as_text {
-    my ($self) = @_;
+sub as_text ($self) {
     my @buffer;
     my $flush_buffer = sub {
         if (@buffer) {
@@ -740,8 +721,7 @@ sub as_text {
         ( @text > 1 and not wantarray ) ? \@text : join( ' ', @text );
 }
 
-sub set_bible_data {
-    my ( $self, $bible, $data ) = @_;
+sub set_bible_data ( $self, $bible = undef, $data = undef ) {
     croak 'First argument to set_bible_data() must be a Bible name string'
         unless ( $bible and not ref $bible and length $bible > 0 );
     croak 'Second argument to set_bible_data() must be an arrayref of arrayrefs'
