@@ -65,7 +65,7 @@ sub in_and_clear : Test(10) {
     ], 'in() is set correctly' );
 
     lives_ok(
-        sub { $obj->in('Moobje text with Roms 12:16, 13:14-15 in it.') },
+        sub { $obj->in('Text with Roms 12:16, 13:14-15 in it.') },
         'in("text 2") lives',
     );
 
@@ -77,7 +77,7 @@ sub in_and_clear : Test(10) {
             [ 'Romans', [ [ 12, [ 13, 14, 17 ] ] ] ],
             ' references in it.',
         ],
-        [ 'Moobje text with ', [ 'Romans', [ [ 12, [16] ], [ 13, [ 14, 15 ] ], ], ], ' in it.' ],
+        [ 'Text with ', [ 'Romans', [ [ 12, [16] ], [ 13, [ 14, 15 ] ], ], ], ' in it.' ],
     ], 'in() is set correctly' );
 
     lives_ok(
@@ -98,7 +98,7 @@ sub in_and_clear : Test(10) {
             [ 'Romans', [ [ 12, [ 13, 14, 17 ] ] ] ],
             ' references in it.',
         ],
-        [ 'Moobje text with ', [ 'Romans', [ [ 12, [16] ], [ 13, [ 14, 15 ] ], ], ], ' in it.' ],
+        [ 'Text with ', [ 'Romans', [ [ 12, [16] ], [ 13, [ 14, 15 ] ], ], ], ' in it.' ],
         [ 'Even more text with ', [ 'James', [ [ 1, [5] ] ] ], ' in it.' ],
         [ 'And one last bit of text with ', [ '1 Corinthians', [ [ 12, [ 8, 9, 10, 11, 12 ] ] ] ], ' in it.' ],
     ], 'in() is set correctly' );
@@ -110,6 +110,14 @@ sub in_and_clear : Test(10) {
 
     is_deeply( $obj->_data, [], '_data is empty' );
 }
+
+
+
+
+1; __END__
+
+
+
 
 sub require_settings : Test(4) {
     my $obj = shift->{obj};

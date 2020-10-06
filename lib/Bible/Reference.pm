@@ -1084,7 +1084,7 @@ sub new ( $self, %params ) {
     return $self;
 }
 
-sub _list ( $self, $start, $stop ) {
+sub _list ( $start, $stop ) {
     $start++ if ( $start == 0 );
     $stop++  if ( $stop  == 0 );
 
@@ -1100,7 +1100,7 @@ sub _expand ( $self, $book, $start, $stop ) {
     my $stop_ch  = ( $stop  =~ s/(\d+):// ) ? $1 : 0;
 
     if ( not $start_ch and not $stop_ch ) {
-        return join( ',', $self->_list( $start, $stop ) );
+        return join( ',', _list( $start, $stop ) );
     }
     elsif ( $start_ch and not $stop_ch ) {
         if ( $stop < $start ) {
@@ -1109,8 +1109,8 @@ sub _expand ( $self, $book, $start, $stop ) {
         }
 
         return join( ',', grep { defined }
-            $start_ch . ':' . join( ',', $self->_list( $start, $stop ) ),
-            ( ($stop_ch) ? join( ',', $self->_list( $start_ch + 1, $stop_ch ) ) : undef ),
+            $start_ch . ':' . join( ',', _list( $start, $stop ) ),
+            ( ($stop_ch) ? join( ',', _list( $start_ch + 1, $stop_ch ) ) : undef ),
         );
     }
     elsif ( not $start_ch and $stop_ch ) {
@@ -1118,22 +1118,22 @@ sub _expand ( $self, $book, $start, $stop ) {
         $start    = 1;
 
         return join( ':',
-            join( ',', $self->_list( $start_ch, $stop_ch ) ),
-            join( ',', $self->_list( $start, $stop ) ),
+            join( ',', _list( $start_ch, $stop_ch ) ),
+            join( ',', _list( $start, $stop ) ),
         );
     }
     elsif ( $start_ch and $stop_ch ) {
         return join( ',', grep { defined }
-            $start_ch . ':' . join( ',', $self->_list(
+            $start_ch . ':' . join( ',', _list(
                 $start,
                 $self->_bible_data->{lengths}{$book}[ $start_ch - 1 ],
             ) ),
             (
                 ( $stop_ch - $start_ch > 1 )
-                    ? join( ',', $self->_list( $start_ch + 1, $stop_ch - 1 ) )
+                    ? join( ',', _list( $start_ch + 1, $stop_ch - 1 ) )
                     : undef
             ),
-            $stop_ch . ':' . join( ',', $self->_list( 1, $stop ) ),
+            $stop_ch . ':' . join( ',', _list( 1, $stop ) ),
         );
     }
 };
@@ -1268,15 +1268,16 @@ sub books ($self) {
     #     @refs = map { $_->[0] = $book_to_acronym->{ $_->[0] }; $_ } @refs;
     # }
 
-sub as_array ($self) {
+sub as_array ( $self, $data = undef ) {
     if (
+        $data or
         not $self->_cache->{data} or
         not (
             $self->_cache->{sorting}  and $self->_cache->{sorting}  == $self->sorting and
             $self->_cache->{acronyms} and $self->_cache->{acronyms} == $self->acronyms
         )
     ) {
-        my $data = [ map { grep { ref } @$_ } @{ $self->_data } ];
+        $data //= [ map { grep { ref } @$_ } @{ $self->_data } ];
 
         if ( $self->sorting ) {
             my $data_by_book = {};
@@ -1334,14 +1335,15 @@ sub as_array ($self) {
 #     return (wantarray) ? %$refs : $refs;
 # }
 
-sub as_hash ($self) {
-    my $data = {};
-    for my $book_block ( $self->as_array ) {
+sub as_hash ( $self, $data = undef ) {
+    my $build = {};
+
+    for my $book_block ( $self->as_array($data) ) {
         my ( $book_name, $chapters ) = @$book_block;
-        push( @{ $data->{$book_name}{ $_->[0] } }, @{ $_->[1] } ) for (@$chapters);
+        push( @{ $build->{$book_name}{ $_->[0] } }, @{ $_->[1] } ) for (@$chapters);
     }
 
-    return (wantarray) ? %$data : $data;
+    return (wantarray) ? %$build : $build;
 }
 
 # TODO: delete this...
@@ -1367,165 +1369,163 @@ sub as_hash ($self) {
 #         keys %$refs;
 # }
 
-sub as_verses ($self) {
-    my $data = [
-        map {
-            my $book = $_->[0];
-            map {
-                my $chapter = $_->[0];
-                map { "$book $chapter:$_" } @{ $_->[1] };
-            } @{ $_->[1] };
-        } $self->as_array
-    ];
+# sub as_verses ($self) {
+#     my $data = [
+#         map {
+#             my $book = $_->[0];
+#             map {
+#                 my $chapter = $_->[0];
+#                 map { "$book $chapter:$_" } @{ $_->[1] };
+#             } @{ $_->[1] };
+#         } $self->as_array
+#     ];
 
-    return (wantarray) ? @$data : $data;
-}
-
-# TODO: delete this...
-
-# sub _compress_range ( $items = [] ) {
-#     my ( $last, @items, @range );
-
-#     my $flush_range = sub {
-#         if (@range) {
-#             pop @items;
-#             push( @items, join( '-', $range[0], $range[-1] ) );
-#             @range = ();
-#         }
-#     };
-
-#     for my $item (@$items) {
-#         if ( not $last or $last + 1 != $item ) {
-#             $flush_range->();
-#             push( @items, $item );
-#         }
-#         else {
-#             push( @range, $last, $item );
-#         }
-
-#         $last = $item;
-#     }
-#     $flush_range->();
-
-#     return (wantarray) ? @items : join( ', ', @items );
+#     return (wantarray) ? @$data : $data;
 # }
 
-# sub _as_getter ( $self, $method = undef ) {
-#     my ( @refs, @chapters, $last_book );
+sub _compress_range ( $items = [] ) {
+    my ( $last, @items, @range );
 
-#     my $flush_chapters = sub {
-#         if (@chapters) {
-#             my ($book) = @_;
-#             push( @refs, "$book " . _compress_range( \@chapters ) );
-#             @chapters = ();
-#         }
-#     };
-
-#     for my $ref ( $self->as_array ) {
-#         my $book = $ref->[0];
-
-#         for my $part ( @{ $ref->[1] } ) {
-#             my $chapter = $part->[0];
-
-#             if ( $part->[1] ) {
-#                 if ( $method eq 'as_verses' ) {
-#                     push( @refs, "$book $chapter:$_" ) for ( @{ $part->[1] } );
-#                 }
-#                 elsif ( $method eq 'as_runs' ) {
-#                     push( @refs, "$book $chapter:$_") for ( _compress_range( $part->[1] ) );
-#                 }
-#                 elsif ( $method eq 'as_chapters' ) {
-#                     push( @refs, "$book $chapter:" . _compress_range( $part->[1] ) );
-#                 }
-#                 elsif ( $method eq 'as_books' )  {
-#                     $flush_chapters->($book);
-
-#                     if ( not $last_book or $last_book ne $book ) {
-#                         push( @refs, "$book $chapter:" . _compress_range( $part->[1] ) );
-#                     }
-#                     else {
-#                         $refs[-1] .= ", $chapter:" . _compress_range( $part->[1] );
-#                     }
-#                 }
-#             }
-#             else {
-#                 if ( $method eq 'as_books' ) {
-#                     push( @chapters, $chapter );
-#                 }
-#                 else {
-#                     push( @refs, "$book $chapter" );
-#                 }
-#             }
-
-#             $last_book = $book if ( $method eq 'as_books' );
-#         }
-
-#         $flush_chapters->($book) if ( $method eq 'as_books' );
-#     }
-
-#     return \@refs;
-# }
-
-
-
-
-
-
-# TODO: THIS IS WHERE I LAST WORKED
-# next step is to rebuild below public methods...
-
-
-
-
-
-
-
-
-sub as_runs ($self) {
-    my $refs = $self->_as_getter('as_runs');
-    return (wantarray) ? @$refs : $refs;
-}
-
-sub as_chapters ($self) {
-    my $refs = $self->_as_getter('as_chapters');
-    return (wantarray) ? @$refs : $refs;
-}
-
-sub as_books ($self) {
-    my $refs = $self->_as_getter('as_books');
-    return (wantarray) ? @$refs : $refs;
-}
-
-sub refs ($self) {
-    return join( '; ', $self->as_books );
-}
-
-sub as_text ($self) {
-    my @buffer;
-    my $flush_buffer = sub {
-        if (@buffer) {
-            $self->_manual_in_refs( [@buffer] );
-            @buffer = ();
-            return $self->refs;
-        }
-        else {
-            return undef;
+    my $flush_range = sub {
+        if (@range) {
+            pop @items;
+            push( @items, join( '-', $range[0], $range[-1] ) );
+            @range = ();
         }
     };
 
-    my @text = map {
-        my @nodes;
-        for my $node (@$_) {
-            unless ( ref $node ) {
-                push( @nodes, $flush_buffer->(), $node );
+    for my $item (@$items) {
+        if ( not $last or $last + 1 != $item ) {
+            $flush_range->();
+            push( @items, $item );
+        }
+        else {
+            push( @range, $last, $item );
+        }
+
+        $last = $item;
+    }
+    $flush_range->();
+
+    return (wantarray) ? @items : join( ', ', @items );
+}
+
+sub _as_getter ( $self, $method = 'as_books', $data = undef ) {
+    my ( @refs, @chapters, $last_book );
+
+    my $flush_chapters = sub {
+        if (@chapters) {
+            my ($book) = @_;
+            push( @refs, "$book " . _compress_range( \@chapters ) );
+            @chapters = ();
+        }
+    };
+
+    for my $ref ( $self->as_array($data) ) {
+        my $book = $ref->[0];
+
+        for my $part ( @{ $ref->[1] } ) {
+            my $chapter = $part->[0];
+
+            if ( $part->[1] ) {
+                if ( $method eq 'as_verses' ) {
+                    push( @refs, "$book $chapter:$_" ) for ( @{ $part->[1] } );
+                }
+                elsif ( $method eq 'as_runs' ) {
+                    push( @refs, "$book $chapter:$_") for ( _compress_range( $part->[1] ) );
+                }
+                elsif ( $method eq 'as_chapters' ) {
+                    push( @refs, "$book $chapter:" . _compress_range( $part->[1] ) );
+                }
+                elsif ( $method eq 'as_books' )  {
+                    $flush_chapters->($book);
+
+                    if ( not $last_book or $last_book ne $book ) {
+                        push( @refs, "$book $chapter:" . _compress_range( $part->[1] ) );
+                    }
+                    else {
+                        $refs[-1] .= ", $chapter:" . _compress_range( $part->[1] );
+                    }
+                }
             }
             else {
-                push( @buffer, $node );
+                if ( $method eq 'as_books' ) {
+                    push( @chapters, $chapter );
+                }
+                else {
+                    push( @refs, "$book $chapter" );
+                }
             }
-        }
-        push( @nodes, $flush_buffer->() );
 
-        join( '', grep { defined } @nodes );
+            $last_book = $book if ( $method eq 'as_books' );
+        }
+
+        $flush_chapters->($book) if ( $method eq 'as_books' );
+    }
+
+    return \@refs;
+}
+
+sub as_verses ( $self, $data = undef ) {
+    my $refs = $self->_as_getter( 'as_verses', $data );
+    return (wantarray) ? @$refs : $refs;
+}
+
+sub as_runs ( $self, $data = undef ) {
+    my $refs = $self->_as_getter( 'as_runs', $data );
+    return (wantarray) ? @$refs : $refs;
+}
+
+sub as_chapters ( $self, $data = undef ) {
+    my $refs = $self->_as_getter( 'as_chapters', $data );
+    return (wantarray) ? @$refs : $refs;
+}
+
+sub as_books ( $self, $data = undef ) {
+    my $refs = $self->_as_getter( 'as_books', $data );
+    return (wantarray) ? @$refs : $refs;
+}
+
+sub refs ( $self, $data = undef ) {
+    return join( '; ', $self->as_books($data) );
+}
+
+# sub as_text ($self) {
+#     my @buffer;
+#     my $flush_buffer = sub {
+#         if (@buffer) {
+#             $self->_manual_in_refs( [@buffer] );
+#             @buffer = ();
+#             return $self->refs;
+#         }
+#         else {
+#             return undef;
+#         }
+#     };
+
+#     my @text = map {
+#         my @nodes;
+#         for my $node (@$_) {
+#             unless ( ref $node ) {
+#                 push( @nodes, $flush_buffer->(), $node );
+#             }
+#             else {
+#                 push( @buffer, $node );
+#             }
+#         }
+#         push( @nodes, $flush_buffer->() );
+
+#         join( '', grep { defined } @nodes );
+#     } @{ $self->_data };
+
+#     return
+#         ( @text > 1 and wantarray )     ? @text :
+#         ( @text > 1 and not wantarray ) ? \@text : join( ' ', @text );
+# }
+
+sub as_text ($self) {
+    my @text = map {
+        join( '', map { ( ref $_ ) ? $self->refs([$_]) : $_ } @$_ );
     } @{ $self->_data };
 
     return

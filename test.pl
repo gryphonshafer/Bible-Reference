@@ -7,7 +7,7 @@ use DDP;
 my $r = Bible::Reference->new;
 
 $r->in(
-    'Romans 12:13-14, 17; 1 Peter 3:16'
+    'A = Romans 12:13-14, 17; 1 Peter 3:16 = A'
     # 'E = Luke 1-3:23, 4:16-5, 6:13-7:2',
 
     # 'The verses Mark 12:4 and Mark 12:3-5 and Mark 12:4-7, 13:1-2 and Genesis 4:1 and Genesis 1:2 are good.',
@@ -45,8 +45,7 @@ $r->in(
 # say join( "\n", $r->as_text );
 
 # p $r->_data;
-my $x = $r->as_verses;
-p $x;
+say $r->as_text;
 
 # my $y = [[ 'Romans', [[ 12, [ 13, 14, 17 ]]]], [ '1 Peter', [[ 3, [16] ]]]];
 # my $y = { 'Romans' => { 12 => [ 13, 14, 17 ] }, '1 Peter' => { 3 => [16] } };
