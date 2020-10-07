@@ -1076,15 +1076,21 @@ sub bible ( $self, $name = undef ) {
         } @matches, @{ $options->{$book} };
     } @$canonical };
 
-    my @re_parts       = sort { length $a <=> length $b } keys %$re_map;
-    my $re_refs_string = '\b(' . join( '|', map { '(?i:[\d:,;\s\-]|dna|ro|&)*' . $_ } @re_parts ) . ')\b';
+    my @re_parts           = sort { length $a <=> length $b } keys %$re_map;
+    my $re_refs            = '(?i:[\d:,;\s\-]|dna|ro|&)*';
+    my $re_refs_req        = '(?i:(?:[\d:,;\s\-]|dna|ro|&)+:(?:[\d:,;\s\-]|dna|ro|&)+)+';
+    my $re_refs_string     = '\b(' . join( '|', map { $re_refs     . $_ } @re_parts ) . ')\b';
+    my $re_refs_req_string = '\b(' . join( '|', map { $re_refs_req . $_ } @re_parts ) . ')\b';
 
     $bible_data->{re_refs_s}  = qr/$re_refs_string/;
+    $bible_data->{re_refs_sr} = qr/$re_refs_req_string/;
     $bible_data->{re_books_s} = [ map { [ qr/\b$_\b/, $re_map->{$_} ] } @re_parts ];
 
-    $re_refs_string =~ s/\(\?\-?i\)//g;
+    $re_refs_string     =~ s/\(\?\-?i\)//g;
+    $re_refs_req_string =~ s/\(\?\-?i\)//g;
 
     $bible_data->{re_refs_i}  = qr/$re_refs_string/i;
+    $bible_data->{re_refs_ir} = qr/$re_refs_req_string/i;
     $bible_data->{re_books_i} = [ map {
         my $this_book = $re_map->{$_};
         s/\(\?\-?i\)//g;
@@ -1164,9 +1170,11 @@ sub _expand ( $self, $book, $start, $stop ) {
 sub in ( $self, @input ) {
     return $self unless (@input);
 
-    my $re_refs = ( $self->require_book_ucfirst )
-        ? $self->_bible_data->{re_refs_s}
-        : $self->_bible_data->{re_refs_i};
+    my $re_refs = $self->_bible_data->{
+        're_refs_' .
+        ( ( $self->require_book_ucfirst ) ? 's' : 'i' ) .
+        ( ( $self->require_verse_match ) ? 'r' : '' )
+    };
 
     my $re_books = ( $self->require_book_ucfirst )
         ? $self->_bible_data->{re_books_s}
@@ -1310,7 +1318,9 @@ sub as_hash ($self) {
 
     for my $book_block ( $self->as_array ) {
         my ( $book_name, $chapters ) = @$book_block;
-        push( @{ $data->{$book_name}{ $_->[0] } }, @{ $_->[1] } ) for (@$chapters);
+        for (@$chapters) {
+            push( @{ $data->{$book_name}{ $_->[0] } }, @{ $_->[1] || [] } );
+        }
     }
 
     return (wantarray) ? %$data : $data;

@@ -3,13 +3,22 @@ use exact;
 use lib 'lib';
 use Bible::Reference;
 use DDP;
+use YAML::XS 'Dump';
 
 my $r = Bible::Reference->new;
 
-# $r->require_book_ucfirst(0);
-
 $r->in(
-    'Text with I Pet 3:16 and Rom 12:13-14,17 references in it.',
+    'Text with I Pet 3:16 and Rom 12:13-14,17 references in it plus Romans 2, 3, 4 and Romans 11:13 refs',
+    # 'Some text from Rom 4:15,16-19,21 and also 1 Corin 5:16, 6:17-19 and such',
+    # 'John 4:19, 4:2, 3:16, 4:18, 20; John 2:17-18, Rom 2:2-14, 15; John 3:19-21, 18, 17, 14, Ac 5, 6, 7, 9',
+    # 'Lk 3:15-17, 18; 4:5-10; Acts 20:29, 32, 35, 1 Tim 4:1, 2 Tim 4:3, 2 Pete 3:3',
+    # '1 Corinthians 5:15-17, 19; Romans 4:35, 5:46, 48',
+    # 'Romans 1:15',
+    # '',
+    # 'Nothing to see 42',
+
+    # 'header romans 12 and james 3:14-17 footer',
+    # 'Text with I Pet 3:16 and Rom 12:13-14,17 references in it.',
     # 'A = roMans 12:13-14, 17; 1 Peter 3:16 = A'
     # 'A = Romans 12:13-14, 17; 1 Peter 3:16 = A'
     # 'E = Luke 1-3:23, 4:16-5, 6:13-7:2',
@@ -44,14 +53,8 @@ $r->in(
     # 'This is content and Acts 1:3-4, & 8, and 13, or 14 and or with other things', # verses
 );
 
-# say join( "\n", $r->as_books );
-# say '-' x 40;
-# say join( "\n", $r->as_text );
+p $r->as_array;
+p $r->as_hash;
 
-# p $r->_data;
-say $r->as_text;
-say $r->refs;
-
-# my $y = [[ 'Romans', [[ 12, [ 13, 14, 17 ]]]], [ '1 Peter', [[ 3, [16] ]]]];
-# my $y = { 'Romans' => { 12 => [ 13, 14, 17 ] }, '1 Peter' => { 3 => [16] } };
-# p $y;
+# say $r->as_text;
+# say $r->refs;

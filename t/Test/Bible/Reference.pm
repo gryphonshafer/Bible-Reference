@@ -111,7 +111,7 @@ sub in_and_clear : Test(10) {
     is_deeply( $obj->_data, [], '_data is empty' );
 }
 
-sub require_settings : Test(2) {
+sub require_settings : Test(4) {
     my $obj = shift->{obj};
 
     $obj->clear->require_book_ucfirst(1);
@@ -124,15 +124,15 @@ sub require_settings : Test(2) {
         [ 'header ', [ 'Romans', [[ 12, [13]]]], ' footer' ],
     ], '"romans 12:13" and require_book_ucfirst(1)' );
 
-    # $obj->clear->require_verse_match(1);
-    # is_deeply( $obj->in('header romans 12 footer')->_data, [
-    #     ['header romans 12 footer'],
-    # ], '"romans 12" and require_verse_match(1)' );
+    $obj->clear->require_verse_match(1);
+    is_deeply( $obj->in('header romans 12 footer')->_data, [
+        ['header romans 12 footer'],
+    ], '"romans 12" and require_verse_match(1)' );
 
-    # $obj->clear->require_verse_match(0);
-    # is_deeply( $obj->in('header romans 12 footer')->_data, [
-    #     [ 'header ', [ 'Romans', [[12]]], ' footer' ],
-    # ], '"romans 12" and require_verse_match(0)' );
+    $obj->clear->require_verse_match(0);
+    is_deeply( $obj->in('header romans 12 footer')->_data, [
+        [ 'header ', [ 'Romans', [[12]]], ' footer' ],
+    ], '"romans 12" and require_verse_match(0)' );
 }
 
 sub books : Test(17) {
@@ -170,8 +170,6 @@ sub books : Test(17) {
     is( $books[1], 'Exodus', 'Vulgate Exodus location' );
     is( $books[-1], 'Revelation', 'Vulgate Revelation location' );
 }
-
-1; __END__
 
 sub as_hash : Test(1) {
     my $obj = shift->{obj};
@@ -218,8 +216,8 @@ sub as_hash : Test(1) {
     #     'as_hash data',
     # );
 
-    # $obj->acronyms(1);
-    # $refs = $obj->as_hash;
+    $obj->acronyms(1);
+    $refs = $obj->as_hash;
 
     # is_deeply(
     #     $refs,
@@ -251,7 +249,7 @@ sub as_hash : Test(1) {
     $obj->acronyms(0);
 }
 
-sub as_array : Test(3) {
+sub as_array : Test(1) {
     my $obj = shift->{obj};
     $obj->clear->acronyms(0);
 
@@ -269,55 +267,55 @@ sub as_array : Test(3) {
     my $refs;
     lives_ok( sub { $refs = $obj->as_array }, 'as_array lives' );
 
-    is_deeply(
-        $refs,
-        [
-            ['Luke',[[3,[15,16,17,18]],[4,[5,6,7,8,9,10]]]],
-            ['John',[[2,[17,18]],[3,[14,16,17,18,19,20,21]],[4,[2,18,19,20]]]],
-            ['Acts',[[5],[6],[7],[9],[20,[29,32,35]]]],
-            ['Romans',[
-                [1,[15]],
-                [2,[2,3,4,5,6,7,8,9,10,11,12,13,14,15]],
-                [3],[4,[15,16,17,18,19,21,35]],
-                [5,[46,48]],[11,[13]],[12,[13,14,17]]]
-            ],
-            ['1 Corinthians',[[5,[15,16,17,19]],[6,[17,18,19]]]],
-            ['1 Timothy',[[4,[1]]]],
-            ['2 Timothy',[[4,[3]]]],
-            ['1 Peter',[[3,[16]]]],
-            ['2 Peter',[[3,[3]]]]
-        ],
-        'as_array data',
-    );
+    # is_deeply(
+    #     $refs,
+    #     [
+    #         ['Luke',[[3,[15,16,17,18]],[4,[5,6,7,8,9,10]]]],
+    #         ['John',[[2,[17,18]],[3,[14,16,17,18,19,20,21]],[4,[2,18,19,20]]]],
+    #         ['Acts',[[5],[6],[7],[9],[20,[29,32,35]]]],
+    #         ['Romans',[
+    #             [1,[15]],
+    #             [2,[2,3,4,5,6,7,8,9,10,11,12,13,14,15]],
+    #             [3],[4,[15,16,17,18,19,21,35]],
+    #             [5,[46,48]],[11,[13]],[12,[13,14,17]]]
+    #         ],
+    #         ['1 Corinthians',[[5,[15,16,17,19]],[6,[17,18,19]]]],
+    #         ['1 Timothy',[[4,[1]]]],
+    #         ['2 Timothy',[[4,[3]]]],
+    #         ['1 Peter',[[3,[16]]]],
+    #         ['2 Peter',[[3,[3]]]]
+    #     ],
+    #     'as_array data',
+    # );
 
     $obj->acronyms(1);
     $refs = $obj->as_array;
 
-    is_deeply(
-        $refs,
-        [
-            ['Lk',[[3,[15,16,17,18]],[4,[5,6,7,8,9,10]]]],
-            ['Joh',[[2,[17,18]],[3,[14,16,17,18,19,20,21]],[4,[2,18,19,20]]]],
-            ['Ac',[[5],[6],[7],[9],[20,[29,32,35]]]],
-            ['Ro',[
-                [1,[15]],
-                [2,[2,3,4,5,6,7,8,9,10,11,12,13,14,15]],
-                [3],[4,[15,16,17,18,19,21,35]],
-                [5,[46,48]],[11,[13]],[12,[13,14,17]]]
-            ],
-            ['1Co',[[5,[15,16,17,19]],[6,[17,18,19]]]],
-            ['1Ti',[[4,[1]]]],
-            ['2Ti',[[4,[3]]]],
-            ['1Pt',[[3,[16]]]],
-            ['2Pt',[[3,[3]]]]
-        ],
-        'as_array data',
-    );
+    # is_deeply(
+    #     $refs,
+    #     [
+    #         ['Lk',[[3,[15,16,17,18]],[4,[5,6,7,8,9,10]]]],
+    #         ['Joh',[[2,[17,18]],[3,[14,16,17,18,19,20,21]],[4,[2,18,19,20]]]],
+    #         ['Ac',[[5],[6],[7],[9],[20,[29,32,35]]]],
+    #         ['Ro',[
+    #             [1,[15]],
+    #             [2,[2,3,4,5,6,7,8,9,10,11,12,13,14,15]],
+    #             [3],[4,[15,16,17,18,19,21,35]],
+    #             [5,[46,48]],[11,[13]],[12,[13,14,17]]]
+    #         ],
+    #         ['1Co',[[5,[15,16,17,19]],[6,[17,18,19]]]],
+    #         ['1Ti',[[4,[1]]]],
+    #         ['2Ti',[[4,[3]]]],
+    #         ['1Pt',[[3,[16]]]],
+    #         ['2Pt',[[3,[3]]]]
+    #     ],
+    #     'as_array data',
+    # );
 
     $obj->acronyms(0);
 }
 
-sub as_verses : Test(2) {
+sub as_verses : Test(1) {
     my $obj = shift->{obj};
     $obj->clear->acronyms(0);
 
@@ -335,31 +333,31 @@ sub as_verses : Test(2) {
     my $refs;
     lives_ok( sub { $refs = $obj->as_verses }, 'as_verses lives' );
 
-    is_deeply(
-        $refs,
-        [
-            'Luke 3:15', 'Luke 3:16', 'Luke 3:17', 'Luke 3:18', 'Luke 4:5',
-            'Luke 4:6', 'Luke 4:7', 'Luke 4:8', 'Luke 4:9', 'Luke 4:10',
-            'John 2:17', 'John 2:18', 'John 3:14', 'John 3:16', 'John 3:17',
-            'John 3:18', 'John 3:19', 'John 3:20', 'John 3:21', 'John 4:2',
-            'John 4:18', 'John 4:19', 'John 4:20', 'Acts 5', 'Acts 6', 'Acts 7',
-            'Acts 9', 'Acts 20:29', 'Acts 20:32', 'Acts 20:35', 'Romans 1:15',
-            'Romans 2:2', 'Romans 2:3', 'Romans 2:4', 'Romans 2:5', 'Romans 2:6',
-            'Romans 2:7', 'Romans 2:8', 'Romans 2:9', 'Romans 2:10', 'Romans 2:11',
-            'Romans 2:12', 'Romans 2:13', 'Romans 2:14', 'Romans 2:15', 'Romans 3',
-            'Romans 4:15', 'Romans 4:16', 'Romans 4:17', 'Romans 4:18', 'Romans 4:19',
-            'Romans 4:21', 'Romans 4:35', 'Romans 5:46', 'Romans 5:48',
-            'Romans 11:13', 'Romans 12:13', 'Romans 12:14', 'Romans 12:17',
-            '1 Corinthians 5:15', '1 Corinthians 5:16', '1 Corinthians 5:17',
-            '1 Corinthians 5:19', '1 Corinthians 6:17', '1 Corinthians 6:18',
-            '1 Corinthians 6:19', '1 Timothy 4:1', '2 Timothy 4:3',
-            '1 Peter 3:16', '2 Peter 3:3',
-        ],
-        'as_verses data',
-    );
+    # is_deeply(
+    #     $refs,
+    #     [
+    #         'Luke 3:15', 'Luke 3:16', 'Luke 3:17', 'Luke 3:18', 'Luke 4:5',
+    #         'Luke 4:6', 'Luke 4:7', 'Luke 4:8', 'Luke 4:9', 'Luke 4:10',
+    #         'John 2:17', 'John 2:18', 'John 3:14', 'John 3:16', 'John 3:17',
+    #         'John 3:18', 'John 3:19', 'John 3:20', 'John 3:21', 'John 4:2',
+    #         'John 4:18', 'John 4:19', 'John 4:20', 'Acts 5', 'Acts 6', 'Acts 7',
+    #         'Acts 9', 'Acts 20:29', 'Acts 20:32', 'Acts 20:35', 'Romans 1:15',
+    #         'Romans 2:2', 'Romans 2:3', 'Romans 2:4', 'Romans 2:5', 'Romans 2:6',
+    #         'Romans 2:7', 'Romans 2:8', 'Romans 2:9', 'Romans 2:10', 'Romans 2:11',
+    #         'Romans 2:12', 'Romans 2:13', 'Romans 2:14', 'Romans 2:15', 'Romans 3',
+    #         'Romans 4:15', 'Romans 4:16', 'Romans 4:17', 'Romans 4:18', 'Romans 4:19',
+    #         'Romans 4:21', 'Romans 4:35', 'Romans 5:46', 'Romans 5:48',
+    #         'Romans 11:13', 'Romans 12:13', 'Romans 12:14', 'Romans 12:17',
+    #         '1 Corinthians 5:15', '1 Corinthians 5:16', '1 Corinthians 5:17',
+    #         '1 Corinthians 5:19', '1 Corinthians 6:17', '1 Corinthians 6:18',
+    #         '1 Corinthians 6:19', '1 Timothy 4:1', '2 Timothy 4:3',
+    #         '1 Peter 3:16', '2 Peter 3:3',
+    #     ],
+    #     'as_verses data',
+    # );
 }
 
-sub as_runs : Test(2) {
+sub as_runs : Test(1) {
     my $obj = shift->{obj};
     $obj->clear->acronyms(0);
 
@@ -377,21 +375,21 @@ sub as_runs : Test(2) {
     my $refs;
     lives_ok( sub { $refs = $obj->as_runs }, 'as_runs lives' );
 
-    is_deeply(
-        $refs,
-        [
-            'Luke 3:15-18', 'Luke 4:5-10', 'John 2:17-18', 'John 3:14', 'John 3:16-21', 'John 4:2',
-            'John 4:18-20', 'Acts 5', 'Acts 6', 'Acts 7', 'Acts 9', 'Acts 20:29', 'Acts 20:32', 'Acts 20:35',
-            'Romans 1:15', 'Romans 2:2-15', 'Romans 3', 'Romans 4:15-19', 'Romans 4:21', 'Romans 4:35',
-            'Romans 5:46', 'Romans 5:48', 'Romans 11:13', 'Romans 12:13-14', 'Romans 12:17',
-            '1 Corinthians 5:15-17', '1 Corinthians 5:19', '1 Corinthians 6:17-19', '1 Timothy 4:1',
-            '2 Timothy 4:3', '1 Peter 3:16', '2 Peter 3:3',
-        ],
-        'as_runs data',
-    );
+    # is_deeply(
+    #     $refs,
+    #     [
+    #         'Luke 3:15-18', 'Luke 4:5-10', 'John 2:17-18', 'John 3:14', 'John 3:16-21', 'John 4:2',
+    #         'John 4:18-20', 'Acts 5', 'Acts 6', 'Acts 7', 'Acts 9', 'Acts 20:29', 'Acts 20:32', 'Acts 20:35',
+    #         'Romans 1:15', 'Romans 2:2-15', 'Romans 3', 'Romans 4:15-19', 'Romans 4:21', 'Romans 4:35',
+    #         'Romans 5:46', 'Romans 5:48', 'Romans 11:13', 'Romans 12:13-14', 'Romans 12:17',
+    #         '1 Corinthians 5:15-17', '1 Corinthians 5:19', '1 Corinthians 6:17-19', '1 Timothy 4:1',
+    #         '2 Timothy 4:3', '1 Peter 3:16', '2 Peter 3:3',
+    #     ],
+    #     'as_runs data',
+    # );
 }
 
-sub as_chapters : Test(2) {
+sub as_chapters : Test(1) {
     my $obj = shift->{obj};
     $obj->clear->acronyms(0);
 
@@ -409,38 +407,38 @@ sub as_chapters : Test(2) {
     my $refs;
     lives_ok( sub { $refs = $obj->as_chapters }, 'as_chapters lives' );
 
-    is_deeply(
-        $refs,
-        [
-            'Luke 3:15-18',
-            'Luke 4:5-10',
-            'John 2:17-18',
-            'John 3:14, 16-21',
-            'John 4:2, 18-20',
-            'Acts 5',
-            'Acts 6',
-            'Acts 7',
-            'Acts 9',
-            'Acts 20:29, 32, 35',
-            'Romans 1:15',
-            'Romans 2:2-15',
-            'Romans 3',
-            'Romans 4:15-19, 21, 35',
-            'Romans 5:46, 48',
-            'Romans 11:13',
-            'Romans 12:13-14, 17',
-            '1 Corinthians 5:15-17, 19',
-            '1 Corinthians 6:17-19',
-            '1 Timothy 4:1',
-            '2 Timothy 4:3',
-            '1 Peter 3:16',
-            '2 Peter 3:3',
-        ],
-        'as_chapters data',
-    );
+    # is_deeply(
+    #     $refs,
+    #     [
+    #         'Luke 3:15-18',
+    #         'Luke 4:5-10',
+    #         'John 2:17-18',
+    #         'John 3:14, 16-21',
+    #         'John 4:2, 18-20',
+    #         'Acts 5',
+    #         'Acts 6',
+    #         'Acts 7',
+    #         'Acts 9',
+    #         'Acts 20:29, 32, 35',
+    #         'Romans 1:15',
+    #         'Romans 2:2-15',
+    #         'Romans 3',
+    #         'Romans 4:15-19, 21, 35',
+    #         'Romans 5:46, 48',
+    #         'Romans 11:13',
+    #         'Romans 12:13-14, 17',
+    #         '1 Corinthians 5:15-17, 19',
+    #         '1 Corinthians 6:17-19',
+    #         '1 Timothy 4:1',
+    #         '2 Timothy 4:3',
+    #         '1 Peter 3:16',
+    #         '2 Peter 3:3',
+    #     ],
+    #     'as_chapters data',
+    # );
 }
 
-sub as_books : Test(2) {
+sub as_books : Test(1) {
     my $obj = shift->{obj};
     $obj->clear->acronyms(0);
 
@@ -458,25 +456,25 @@ sub as_books : Test(2) {
     my $refs;
     lives_ok( sub { $refs = $obj->as_books }, 'as_books lives' );
 
-    is_deeply(
-        $refs,
-        [
-            'Luke 3:15-18, 4:5-10',
-            'John 2:17-18, 3:14, 16-21, 4:2, 18-20',
-            'Acts 5-7, 9, 20:29, 32, 35',
-            'Romans 1:15, 2:2-15',
-            'Romans 3, 4:15-19, 21, 35, 5:46, 48, 11:13, 12:13-14, 17',
-            '1 Corinthians 5:15-17, 19, 6:17-19',
-            '1 Timothy 4:1',
-            '2 Timothy 4:3',
-            '1 Peter 3:16',
-            '2 Peter 3:3',
-        ],
-        'as_books data',
-    );
+    # is_deeply(
+    #     $refs,
+    #     [
+    #         'Luke 3:15-18, 4:5-10',
+    #         'John 2:17-18, 3:14, 16-21, 4:2, 18-20',
+    #         'Acts 5-7, 9, 20:29, 32, 35',
+    #         'Romans 1:15, 2:2-15',
+    #         'Romans 3, 4:15-19, 21, 35, 5:46, 48, 11:13, 12:13-14, 17',
+    #         '1 Corinthians 5:15-17, 19, 6:17-19',
+    #         '1 Timothy 4:1',
+    #         '2 Timothy 4:3',
+    #         '1 Peter 3:16',
+    #         '2 Peter 3:3',
+    #     ],
+    #     'as_books data',
+    # );
 }
 
-sub refs : Test(2) {
+sub refs : Test(1) {
     my $obj = shift->{obj};
     $obj->clear->acronyms(0);
 
@@ -494,17 +492,17 @@ sub refs : Test(2) {
     my $refs;
     lives_ok( sub { $refs = $obj->refs }, 'refs lives' );
 
-    is_deeply(
-        $refs,
-        'Luke 3:15-18, 4:5-10; John 2:17-18, 3:14, 16-21, 4:2, 18-20; Acts 5-7, ' .
-            '9, 20:29, 32, 35; Romans 1:15, 2:2-15; Romans 3, 4:15-19, 21, 35, ' .
-            '5:46, 48, 11:13, 12:13-14, 17; 1 Corinthians 5:15-17, 19, 6:17-19; ' .
-            '1 Timothy 4:1; 2 Timothy 4:3; 1 Peter 3:16; 2 Peter 3:3',
-        'refs data',
-    );
+    # is_deeply(
+    #     $refs,
+    #     'Luke 3:15-18, 4:5-10; John 2:17-18, 3:14, 16-21, 4:2, 18-20; Acts 5-7, ' .
+    #         '9, 20:29, 32, 35; Romans 1:15, 2:2-15; Romans 3, 4:15-19, 21, 35, ' .
+    #         '5:46, 48, 11:13, 12:13-14, 17; 1 Corinthians 5:15-17, 19, 6:17-19; ' .
+    #         '1 Timothy 4:1; 2 Timothy 4:3; 1 Peter 3:16; 2 Peter 3:3',
+    #     'refs data',
+    # );
 }
 
-sub as_text : Test(2) {
+sub as_text : Test(1) {
     my $obj = shift->{obj};
     $obj->clear->acronyms(0);
 
@@ -522,23 +520,23 @@ sub as_text : Test(2) {
     my $refs;
     lives_ok( sub { $refs = $obj->as_text }, 'as_text lives' );
 
-    is_deeply(
-        $refs,
-        [
-            'Text with 1 Peter 3:16 and Romans 12:13-14, 17 references in it plus Romans 2-4 and Romans 11:13 refs',
-            'Some text from Romans 4:15-19, 21 and also 1 Corinthians 5:16, 6:17-19 and such',
-            'John 3:16, 4:2, 18-20; John 2:17-18, Romans 2:2-15; John 3:14, 17-21, Acts 5-7, 9',
-            'Luke 3:15-18, 4:5-10; Acts 20:29, 32, 35, 1 Timothy 4:1, 2 Timothy 4:3, 2 Peter 3:3',
-            '1 Corinthians 5:15-17, 19; Romans 4:35, 5:46, 48',
-            'Romans 1:15',
-            '',
-            'Nothing to see 42',
-        ],
-        'as_text data',
-    );
+    # is_deeply(
+    #     $refs,
+    #     [
+    #         'Text with 1 Peter 3:16 and Romans 12:13-14, 17 references in it plus Romans 2-4 and Romans 11:13 refs',
+    #         'Some text from Romans 4:15-19, 21 and also 1 Corinthians 5:16, 6:17-19 and such',
+    #         'John 3:16, 4:2, 18-20; John 2:17-18, Romans 2:2-15; John 3:14, 17-21, Acts 5-7, 9',
+    #         'Luke 3:15-18, 4:5-10; Acts 20:29, 32, 35, 1 Timothy 4:1, 2 Timothy 4:3, 2 Peter 3:3',
+    #         '1 Corinthians 5:15-17, 19; Romans 4:35, 5:46, 48',
+    #         'Romans 1:15',
+    #         '',
+    #         'Nothing to see 42',
+    #     ],
+    #     'as_text data',
+    # );
 }
 
-sub set_bible_data : Test(7) {
+sub set_bible_data : Test(10) {
     my $obj = shift->{obj};
 
     throws_ok( sub { $obj->set_bible_data }, qr/^First argument/, 'set_bible_data()' );
@@ -599,13 +597,11 @@ sub set_bible_data : Test(7) {
         sub { @books = $obj->books },
         'books lives',
     );
-    ok(
-        @books == 39 &&
-        $books[0] eq 'Genesis' &&
-        $books[1] eq 'Exodus' &&
-        $books[-1] eq 'Malachi',
-        'books data OK',
-    );
+
+    is( scalar @books, 39, 'Special book count' );
+    is( $books[0], 'Genesis', 'Special Genesis location' );
+    is( $books[1], 'Exodus', 'Special Exodus location' );
+    is( $books[-1], 'Malachi', 'Special Revelation location' );
 }
 
 1;
