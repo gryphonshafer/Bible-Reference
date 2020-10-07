@@ -10,7 +10,6 @@ package Bible::Reference;
 
 # TODO: POD to code match-up
 
-
 use 5.014;
 
 use exact;
@@ -1008,7 +1007,7 @@ sub bible ( $self, $name = undef ) {
     croak "Could not determine a valid Bible type from input" unless ($bible);
     $self->_bible($bible);
 
-    my $books = $self->_bibles->{ $self->_bible };
+    my $books = [ map { [@$_] } @{ $self->_bibles->{ $self->_bible } } ];
 
     my $bible_data;
     for my $book_data (@$books) {
@@ -1306,11 +1305,15 @@ sub as_array ( $self, $data = undef ) {
     return (wantarray) ? @{ $self->_cache->{data} } : $self->_cache->{data};
 }
 
-sub as_huild = {};
+sub as_hash ($self) {
+    my $data = {};
 
-    for my $book_block ( $self->as_array($data) ) {
-        my ( $bookuild->{$book_name}{ $_->[0] } }, @{ $_->[1] } ) for (@$chapters);
+    for my $book_block ( $self->as_array ) {
+        my ( $book_name, $chapters ) = @$book_block;
+        push( @{ $data->{$book_name}{ $_->[0] } }, @{ $_->[1] } ) for (@$chapters);
     }
+
+    return (wantarray) ? %$data : $data;
 }
 
 sub _compress_range ( $items = [] ) {

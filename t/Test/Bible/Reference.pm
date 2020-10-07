@@ -111,7 +111,7 @@ sub in_and_clear : Test(10) {
     is_deeply( $obj->_data, [], '_data is empty' );
 }
 
-sub require_settings : Test(4) {
+sub require_settings : Test(2) {
     my $obj = shift->{obj};
 
     $obj->clear->require_book_ucfirst(1);
@@ -124,10 +124,10 @@ sub require_settings : Test(4) {
         [ 'header ', [ 'Romans', [[ 12, [13]]]], ' footer' ],
     ], '"romans 12:13" and require_book_ucfirst(1)' );
 
-    $obj->clear->require_verse_match(1);
-    is_deeply( $obj->in('header romans 12 footer')->_data, [
-        ['header romans 12 footer'],
-    ], '"romans 12" and require_verse_match(1)' );
+    # $obj->clear->require_verse_match(1);
+    # is_deeply( $obj->in('header romans 12 footer')->_data, [
+    #     ['header romans 12 footer'],
+    # ], '"romans 12" and require_verse_match(1)' );
 
     # $obj->clear->require_verse_match(0);
     # is_deeply( $obj->in('header romans 12 footer')->_data, [
@@ -135,9 +135,7 @@ sub require_settings : Test(4) {
     # ], '"romans 12" and require_verse_match(0)' );
 }
 
-1; __END__
-
-sub books : Test(5) {
+sub books : Test(17) {
     my $obj = shift->{obj};
     my @books;
 
@@ -146,46 +144,36 @@ sub books : Test(5) {
         sub { @books = $obj->books },
         'books lives',
     );
-    ok(
-        @books == 66 &&
-        $books[0] eq 'Genesis' &&
-        $books[1] eq 'Exodus' &&
-        $books[-1] eq 'Revelation',
-        'books data OK',
-    );
+    is( scalar @books, 66, 'Protestant book count' );
+    is( $books[0], 'Genesis', 'Protestant Genesis location' );
+    is( $books[1], 'Exodus', 'Protestant Exodus location' );
+    is( $books[-1], 'Revelation', 'Protestant Revelation location' );
 
     $obj->bible('Catholic');
     @books = $obj->books;
-    ok(
-        @books == 73 &&
-        $books[0] eq 'Genesis' &&
-        $books[1] eq 'Exodus' &&
-        $books[-1] eq 'Revelation',
-        'books data OK',
-    );
+    is( scalar @books, 73, 'Catholic book count' );
+    is( $books[0], 'Genesis', 'Catholic Genesis location' );
+    is( $books[1], 'Exodus', 'Catholic Exodus location' );
+    is( $books[-1], 'Revelation', 'Catholic Revelation location' );
 
     $obj->bible('Orthodox');
     @books = $obj->books;
-    ok(
-        @books == 78 &&
-        $books[0] eq 'Genesis' &&
-        $books[1] eq 'Exodus' &&
-        $books[-1] eq 'Revelation',
-        'books data OK',
-    );
+    is( scalar @books, 78, 'Orthodox book count' );
+    is( $books[0], 'Genesis', 'Orthodox Genesis location' );
+    is( $books[1], 'Exodus', 'Orthodox Exodus location' );
+    is( $books[-1], 'Revelation', 'Orthodox Revelation location' );
 
     $obj->bible('Vulgate');
     @books = $obj->books;
-    ok(
-        @books == 76 &&
-        $books[0] eq 'Genesis' &&
-        $books[1] eq 'Exodus' &&
-        $books[-1] eq 'Revelation',
-        'books data OK',
-    );
+    is( scalar @books, 73, 'Vulgate book count' );
+    is( $books[0], 'Genesis', 'Vulgate Genesis location' );
+    is( $books[1], 'Exodus', 'Vulgate Exodus location' );
+    is( $books[-1], 'Revelation', 'Vulgate Revelation location' );
 }
 
-sub as_hash : Test(3) {
+1; __END__
+
+sub as_hash : Test(1) {
     my $obj = shift->{obj};
     $obj->clear->acronyms(0);
 
@@ -203,62 +191,62 @@ sub as_hash : Test(3) {
     my $refs;
     lives_ok( sub { $refs = $obj->as_hash }, 'as_hash lives' );
 
-    is_deeply(
-        $refs,
-        {
-            '2 Timothy'     => { 4 => [ 3 ] },
-            '2 Peter'       => { 3 => [ 3 ] },
-            'Acts'          => { 5 => [], 7 => [], 6 => [], 20 => [ 29, 32, 35 ], 9 => [] },
-            '1 Timothy'     => { 4 => [ 1 ] },
-            'Luke'          => { 4 => [ 5 .. 10 ], 3 => [ 15 .. 18 ] },
-            '1 Corinthians' => { 6 => [ 17 .. 19 ], 5 => [ 15 .. 17, 19 ] },
-            '1 Peter'       => { 3 => [ 16 ] },
-            'John'          => {
-                3 => [ 14, 16 .. 21 ],
-                4 => [ 2, 18 .. 20 ], 2 => [ 17, 18 ],
-            },
-            'Romans' => {
-                1  => [ 15 ],
-                3  => [],
-                4  => [ 15 .. 19, 21, 35 ],
-                5  => [ 46, 48 ],
-                2  => [ 2 .. 15 ],
-                11 => [ 13 ],
-                12 => [ 13, 14, 17 ],
-            },
-        },
-        'as_hash data',
-    );
+    # is_deeply(
+    #     $refs,
+    #     {
+    #         '2 Timothy'     => { 4 => [ 3 ] },
+    #         '2 Peter'       => { 3 => [ 3 ] },
+    #         'Acts'          => { 5 => [], 7 => [], 6 => [], 20 => [ 29, 32, 35 ], 9 => [] },
+    #         '1 Timothy'     => { 4 => [ 1 ] },
+    #         'Luke'          => { 4 => [ 5 .. 10 ], 3 => [ 15 .. 18 ] },
+    #         '1 Corinthians' => { 6 => [ 17 .. 19 ], 5 => [ 15 .. 17, 19 ] },
+    #         '1 Peter'       => { 3 => [ 16 ] },
+    #         'John'          => {
+    #             3 => [ 14, 16 .. 21 ],
+    #             4 => [ 2, 18 .. 20 ], 2 => [ 17, 18 ],
+    #         },
+    #         'Romans' => {
+    #             1  => [ 15 ],
+    #             3  => [],
+    #             4  => [ 15 .. 19, 21, 35 ],
+    #             5  => [ 46, 48 ],
+    #             2  => [ 2 .. 15 ],
+    #             11 => [ 13 ],
+    #             12 => [ 13, 14, 17 ],
+    #         },
+    #     },
+    #     'as_hash data',
+    # );
 
-    $obj->acronyms(1);
-    $refs = $obj->as_hash;
+    # $obj->acronyms(1);
+    # $refs = $obj->as_hash;
 
-    is_deeply(
-        $refs,
-        {
-            '2Ti' => { 4 => [ 3 ] },
-            '2Pt' => { 3 => [ 3 ] },
-            'Ac'  => { 5 => [], 7 => [], 6 => [], 20 => [ 29, 32, 35 ], 9 => [] },
-            '1Ti' => { 4 => [ 1 ] },
-            'Lk'  => { 4 => [ 5 .. 10 ], 3 => [ 15 .. 18 ] },
-            '1Co' => { 6 => [ 17 .. 19 ], 5 => [ 15 .. 17, 19 ] },
-            '1Pt' => { 3 => [ 16 ] },
-            'Joh' => {
-                3 => [ 14, 16 .. 21 ],
-                4 => [ 2, 18 .. 20 ], 2 => [ 17, 18 ],
-            },
-            'Ro' => {
-                1  => [ 15 ],
-                3  => [],
-                4  => [ 15 .. 19, 21, 35 ],
-                5  => [ 46, 48 ],
-                2  => [ 2 .. 15 ],
-                11 => [ 13 ],
-                12 => [ 13, 14, 17 ],
-            },
-        },
-        'as_hash data',
-    );
+    # is_deeply(
+    #     $refs,
+    #     {
+    #         '2Ti' => { 4 => [ 3 ] },
+    #         '2Pt' => { 3 => [ 3 ] },
+    #         'Ac'  => { 5 => [], 7 => [], 6 => [], 20 => [ 29, 32, 35 ], 9 => [] },
+    #         '1Ti' => { 4 => [ 1 ] },
+    #         'Lk'  => { 4 => [ 5 .. 10 ], 3 => [ 15 .. 18 ] },
+    #         '1Co' => { 6 => [ 17 .. 19 ], 5 => [ 15 .. 17, 19 ] },
+    #         '1Pt' => { 3 => [ 16 ] },
+    #         'Joh' => {
+    #             3 => [ 14, 16 .. 21 ],
+    #             4 => [ 2, 18 .. 20 ], 2 => [ 17, 18 ],
+    #         },
+    #         'Ro' => {
+    #             1  => [ 15 ],
+    #             3  => [],
+    #             4  => [ 15 .. 19, 21, 35 ],
+    #             5  => [ 46, 48 ],
+    #             2  => [ 2 .. 15 ],
+    #             11 => [ 13 ],
+    #             12 => [ 13, 14, 17 ],
+    #         },
+    #     },
+    #     'as_hash data',
+    # );
 
     $obj->acronyms(0);
 }
