@@ -1,6 +1,16 @@
 package Bible::Reference;
 # ABSTRACT: Simple Bible reference parser, tester, and canonicalizer
 
+# TODO: require_verse_match support
+    # has require_verse_match  => 0; (replace * with + to require more than just book)
+
+# TODO: support "Rev. 4:12" situations
+
+# TODO: functionality regression = go through all historical examples, check output, encode in tests
+
+# TODO: POD to code match-up
+
+
 use 5.014;
 
 use exact;
@@ -67,7 +77,7 @@ has _bibles => {
         [ 'Luke',                  'Lk',   'Lu',      'Luk'                                              ],
         [ 'John',                  'Joh'                                                                 ],
         [ 'Acts',                  'Ac',   'Act'                                                         ],
-        [ 'Romans',                'Ro',   'Rm',      'Rom'                                              ],
+        [ 'Romans',                'Ro',   'Rm',      'Rom',                 'Roms'                      ],
         [ '1 Corinthians',         '1Co',  '1Cor'                                                        ],
         [ '2 Corinthians',         '2Co',  '2Cor'                                                        ],
         [ 'Galatians',             'Ga',   'Gl',      'Gal'                                              ],
@@ -147,7 +157,7 @@ has _bibles => {
         [ 'Luke',                  'Lk',   'Lu',      'Luk'                                              ],
         [ 'John',                  'Joh'                                                                 ],
         [ 'Acts',                  'Ac',   'Act'                                                         ],
-        [ 'Romans',                'Ro',   'Rm',      'Rom'                                              ],
+        [ 'Romans',                'Ro',   'Rm',      'Rom',                 'Roms'                      ],
         [ '1 Corinthians',         '1Co',  '1Cor'                                                        ],
         [ '2 Corinthians',         '2Co',  '2Cor'                                                        ],
         [ 'Galatians',             'Ga',   'Gl',      'Gal'                                              ],
@@ -215,7 +225,7 @@ has _bibles => {
         [ 'Luke',                  'Lk',   'Lu',      'Luk'                                              ],
         [ 'John',                  'Joh'                                                                 ],
         [ 'Acts',                  'Ac',   'Act'                                                         ],
-        [ 'Romans',                'Ro',   'Rm',      'Rom'                                              ],
+        [ 'Romans',                'Ro',   'Rm',      'Rom',                 'Roms'                      ],
         [ '1 Corinthians',         '1Co',  '1Cor'                                                        ],
         [ '2 Corinthians',         '2Co',  '2Cor'                                                        ],
         [ 'Galatians',             'Ga',   'Gl',      'Gal'                                              ],
@@ -290,7 +300,7 @@ has _bibles => {
         [ 'Luke',                  'Lk',   'Lu',      'Luk',                 'Lucas'                     ],
         [ 'John',                  'Joh',  'Ioannes'                                                     ],
         [ 'Acts',                  'Ac',   'Act',     'Actus Apostolorum'                                ],
-        [ 'Romans',                'Ro',   'Rm',      'Rom',                 'Romanos'                   ],
+        [ 'Romans',                'Ro',   'Rm',      'Rom',                 'Roms'                      ],
         [ '1 Corinthians',         '1Co',  '1Cor',    '1 Corinthios'                                     ],
         [ '2 Corinthians',         '2Co',  '2Cor',    '2 Corinthios'                                     ],
         [ 'Galatians',             'Ga',   'Gl',      'Gal',                 'Galatas'                   ],
@@ -1016,7 +1026,7 @@ sub bible ( $self, $name = undef ) {
         my $book     = $_;
         my $book_str = $_;
         my @prefix   = (
-            ( $book_str =~ s/(\d)\s// ) ? (
+            ( $book_str =~ s/^(\d)\s// ) ? (
                 (
                     (
                         ( $1 == 1 ) ? ( qw( I   First  ) ) :
@@ -1050,8 +1060,12 @@ sub bible ( $self, $name = undef ) {
 
         @matches = map {
             my $match = $_;
-            map { $_ . ' ' . $match } @prefix;
-        } @matches if (@prefix);
+
+            $match .= ')i?(';
+            $match =~ s/^(\w)/$1)i-?(/;
+
+            (@prefix) ? ( map { ')' . $_ . ':i?(' . ' ' . $match } @prefix ) : $match;
+        } @matches;
 
         map {
             my $re = reverse $_;
@@ -1064,10 +1078,20 @@ sub bible ( $self, $name = undef ) {
     } @$canonical };
 
     my @re_parts       = sort { length $a <=> length $b } keys %$re_map;
-    my $re_refs_string = '\b(' . join( '|', map { '(?:[\d:,;\s\-]|dna|ro|&)*' . $_ } @re_parts ) . ')\b';
+    my $re_refs_string = '\b(' . join( '|', map { '(?i:[\d:,;\s\-]|dna|ro|&)*' . $_ } @re_parts ) . ')\b';
 
-    $bible_data->{re_refs}  = qr/$re_refs_string/;
-    $bible_data->{re_books} = [ map { [ qr/\b$_\b/, $re_map->{$_} ] } @re_parts ];
+    $bible_data->{re_refs_s}  = qr/$re_refs_string/;
+    $bible_data->{re_books_s} = [ map { [ qr/\b$_\b/, $re_map->{$_} ] } @re_parts ];
+
+    $re_refs_string =~ s/\(\?\-?i\)//g;
+
+    $bible_data->{re_refs_i}  = qr/$re_refs_string/i;
+    $bible_data->{re_books_i} = [ map {
+        my $this_book = $re_map->{$_};
+        s/\(\?\-?i\)//g;
+        [ qr/\b$_\b/i, $this_book ];
+    } @re_parts ];
+
     $bible_data->{lengths}  = {
         map {
             $bible_data->{books}[$_] => $self->_lengths->{$bible}[$_]
@@ -1141,21 +1165,29 @@ sub _expand ( $self, $book, $start, $stop ) {
 sub in ( $self, @input ) {
     return $self unless (@input);
 
-    my $re_refs = $self->_bible_data->{re_refs};
+    my $re_refs = ( $self->require_book_ucfirst )
+        ? $self->_bible_data->{re_refs_s}
+        : $self->_bible_data->{re_refs_i};
+
+    my $re_books = ( $self->require_book_ucfirst )
+        ? $self->_bible_data->{re_books_s}
+        : $self->_bible_data->{re_books_i};
+
     for my $string (@input) {
         $string = scalar( reverse $string );
         my @processed;
         while ( $string =~ /$re_refs/ ) {
             my ( $pre, $ref, $post ) = split( /$re_refs/, $string, 2 );
+
             $string = $post;
 
-            my $space = ( $ref =~ s/^((?:\W|dna|ro|&)+)// ) ? $1 : '';
+            my $space = ( $ref =~ s/^((?i:\W|dna|ro|&)+)// ) ? $1 : '';
             $ref =~ s/\s+/ /g;
             $pre = $pre . $space;
             push( @processed, $pre );
 
             my $book;
-            for ( @{ $self->_bible_data->{re_books} } ) {
+            for (@$re_books) {
                 if ( $ref =~ /$_->[0]/ ) {
                     $book = $_->[1];
                     last;
@@ -1164,12 +1196,6 @@ sub in ( $self, @input ) {
 
             my $ref_out = [$book];
             my $numbers = [];
-
-            # TODO: require_verse_match and require_book_ucfirst support
-                # has require_verse_match  => 0; (replace * with + to require more than just book)
-                # has require_book_ucfirst => 0;
-
-            # TODO: support "Rev. 4:12" situations
 
             $ref =~ s/(?:dna|ro|&)/,/g;
             $ref = scalar reverse $ref;
@@ -1226,48 +1252,6 @@ sub books ($self) {
     return (wantarray) ? @{ $self->_bible_data->{books} } : $self->_bible_data->{books};
 }
 
-# TODO: delete this...
-
-# sub _as_hashref {
-#     my %refs;
-#     for my $ref (@_) {
-#         my $book = $ref->[0];
-
-#         for my $chapter_block ( @{ $ref->[1] } ) {
-#             my $chapter = $chapter_block->[0];
-
-#             $refs{$book}{$chapter} //= [];
-#             if ( $chapter_block->[1] ) {
-#                 my %verses = map { $_ => 1 } @{ $refs{$book}{$chapter} }, @{ $chapter_block->[1] };
-#                 $refs{$book}{$chapter} = [ sort { $a <=> $b } keys %verses ];
-#             }
-#         }
-#     }
-
-#     return \%refs;
-# }
-
-# has _manual_in_refs => [];
-
-# sub _in_refs ($self) {
-#     unless ( @{ $self->_manual_in_refs } ) {
-#         return grep { ref } map { @$_ } @{ $self->_data };
-#     }
-#     else {
-#         my $refs = $self->_manual_in_refs;
-#         $self->_manual_in_refs([]);
-#         return @$refs;
-#     }
-# }
-
-    # my @refs = $self->_in_refs;
-    # @refs = $self->_sort(@refs) if ( $self->sorting );
-
-    # if ( $self->acronyms ) {
-    #     my $book_to_acronym = $self->_bible_data->{book_to_acronym};
-    #     @refs = map { $_->[0] = $book_to_acronym->{ $_->[0] }; $_ } @refs;
-    # }
-
 sub as_array ( $self, $data = undef ) {
     if (
         $data or
@@ -1322,66 +1306,12 @@ sub as_array ( $self, $data = undef ) {
     return (wantarray) ? @{ $self->_cache->{data} } : $self->_cache->{data};
 }
 
-# TODO: delete this...
-
-# sub as_hash ($self) {
-#     my $refs = _as_hashref( $self->_in_refs );
-
-#     if ( $self->acronyms ) {
-#         my $book_to_acronym = $self->_bible_data->{book_to_acronym};
-#         $refs->{ $book_to_acronym->{$_} } = delete $refs->{$_} for ( keys %$refs );
-#     }
-
-#     return (wantarray) ? %$refs : $refs;
-# }
-
-sub as_hash ( $self, $data = undef ) {
-    my $build = {};
+sub as_huild = {};
 
     for my $book_block ( $self->as_array($data) ) {
-        my ( $book_name, $chapters ) = @$book_block;
-        push( @{ $build->{$book_name}{ $_->[0] } }, @{ $_->[1] } ) for (@$chapters);
+        my ( $bookuild->{$book_name}{ $_->[0] } }, @{ $_->[1] } ) for (@$chapters);
     }
-
-    return (wantarray) ? %$build : $build;
 }
-
-# TODO: delete this...
-
-# sub _sort ( $self, @input ) {
-#     my $book_order = $self->_bible_data->{book_order};
-#     my $refs       = _as_hashref(@input);
-
-#     return
-#         map {
-#             my $book = $_->[1];
-#             [
-#                 $book,
-#                 [
-#                     map {
-#                         ( @{ $refs->{$book}{$_} } ) ? [ $_, $refs->{$book}{$_} ] : [$_]
-#                     } sort { $a <=> $b } keys %{ $refs->{$book} }
-#                 ],
-#             ];
-#         }
-#         sort { $a->[0] <=> $b->[0] }
-#         map { [ $book_order->{$_}, $_ ] }
-#         keys %$refs;
-# }
-
-# sub as_verses ($self) {
-#     my $data = [
-#         map {
-#             my $book = $_->[0];
-#             map {
-#                 my $chapter = $_->[0];
-#                 map { "$book $chapter:$_" } @{ $_->[1] };
-#             } @{ $_->[1] };
-#         } $self->as_array
-#     ];
-
-#     return (wantarray) ? @$data : $data;
-# }
 
 sub _compress_range ( $items = [] ) {
     my ( $last, @items, @range );
@@ -1490,39 +1420,6 @@ sub refs ( $self, $data = undef ) {
     return join( '; ', $self->as_books($data) );
 }
 
-# sub as_text ($self) {
-#     my @buffer;
-#     my $flush_buffer = sub {
-#         if (@buffer) {
-#             $self->_manual_in_refs( [@buffer] );
-#             @buffer = ();
-#             return $self->refs;
-#         }
-#         else {
-#             return undef;
-#         }
-#     };
-
-#     my @text = map {
-#         my @nodes;
-#         for my $node (@$_) {
-#             unless ( ref $node ) {
-#                 push( @nodes, $flush_buffer->(), $node );
-#             }
-#             else {
-#                 push( @buffer, $node );
-#             }
-#         }
-#         push( @nodes, $flush_buffer->() );
-
-#         join( '', grep { defined } @nodes );
-#     } @{ $self->_data };
-
-#     return
-#         ( @text > 1 and wantarray )     ? @text :
-#         ( @text > 1 and not wantarray ) ? \@text : join( ' ', @text );
-# }
-
 sub as_text ($self) {
     my @text = map {
         join( '', map { ( ref $_ ) ? $self->refs([$_]) : $_ } @$_ );
@@ -1559,8 +1456,7 @@ __END__
 
 =begin :badges
 
-=for markdown
-[![Build Status](https://travis-ci.org/gryphonshafer/Bible-Reference.svg)](https://travis-ci.org/gryphonshafer/Bible-Reference)
+=fouild Status](https://travis-ci.org/gryphonshafer/Bible-Reference.svg)](https://travis-ci.org/gryphonshafer/Bible-Reference)
 [![Coverage Status](https://coveralls.io/repos/gryphonshafer/Bible-Reference/badge.png)](https://coveralls.io/r/gryphonshafer/Bible-Reference)
 
 =end :badges
@@ -1863,7 +1759,5 @@ You can look for additional information at:
 * L<Coveralls|https://coveralls.io/r/gryphonshafer/Bible-Reference>
 * L<CPANTS|http://cpants.cpanauthors.org/dist/Bible-Reference>
 * L<CPAN Testers|http://www.cpantesters.org/distro/B/Bible-Reference.html>
-
-=for Pod::Coverage BUILD
 
 =cut

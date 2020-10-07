@@ -6,8 +6,12 @@ use DDP;
 
 my $r = Bible::Reference->new;
 
+# $r->require_book_ucfirst(0);
+
 $r->in(
-    'A = Romans 12:13-14, 17; 1 Peter 3:16 = A'
+    'Text with I Pet 3:16 and Rom 12:13-14,17 references in it.',
+    # 'A = roMans 12:13-14, 17; 1 Peter 3:16 = A'
+    # 'A = Romans 12:13-14, 17; 1 Peter 3:16 = A'
     # 'E = Luke 1-3:23, 4:16-5, 6:13-7:2',
 
     # 'The verses Mark 12:4 and Mark 12:3-5 and Mark 12:4-7, 13:1-2 and Genesis 4:1 and Genesis 1:2 are good.',
@@ -46,6 +50,7 @@ $r->in(
 
 # p $r->_data;
 say $r->as_text;
+say $r->refs;
 
 # my $y = [[ 'Romans', [[ 12, [ 13, 14, 17 ]]]], [ '1 Peter', [[ 3, [16] ]]]];
 # my $y = { 'Romans' => { 12 => [ 13, 14, 17 ] }, '1 Peter' => { 3 => [16] } };

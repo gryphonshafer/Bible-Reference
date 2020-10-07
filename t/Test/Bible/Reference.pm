@@ -111,14 +111,6 @@ sub in_and_clear : Test(10) {
     is_deeply( $obj->_data, [], '_data is empty' );
 }
 
-
-
-
-1; __END__
-
-
-
-
 sub require_settings : Test(4) {
     my $obj = shift->{obj};
 
@@ -137,11 +129,13 @@ sub require_settings : Test(4) {
         ['header romans 12 footer'],
     ], '"romans 12" and require_verse_match(1)' );
 
-    $obj->clear->require_verse_match(0);
-    is_deeply( $obj->in('header romans 12 footer')->_data, [
-        [ 'header ', [ 'Romans', [[12]]], ' footer' ],
-    ], '"romans 12" and require_verse_match(0)' );
+    # $obj->clear->require_verse_match(0);
+    # is_deeply( $obj->in('header romans 12 footer')->_data, [
+    #     [ 'header ', [ 'Romans', [[12]]], ' footer' ],
+    # ], '"romans 12" and require_verse_match(0)' );
 }
+
+1; __END__
 
 sub books : Test(5) {
     my $obj = shift->{obj};
