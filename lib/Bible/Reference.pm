@@ -1,15 +1,6 @@
 package Bible::Reference;
 # ABSTRACT: Simple Bible reference parser, tester, and canonicalizer
 
-# TODO: require_verse_match support
-    # has require_verse_match  => 0; (replace * with + to require more than just book)
-
-# TODO: support "Rev. 4:12" situations
-
-# TODO: functionality regression = go through all historical examples, check output, encode in tests
-
-# TODO: POD to code match-up
-
 use 5.014;
 
 use exact;
@@ -22,6 +13,7 @@ has sorting              => 1;
 has require_verse_match  => 0;
 has require_book_ucfirst => 0;
 has minimum_book_length  => 3;
+has add_detail           => 0;
 
 has _bibles => {
     Catholic => [
@@ -1076,9 +1068,9 @@ sub bible ( $self, $name = undef ) {
         } @matches, @{ $options->{$book} };
     } @$canonical };
 
-    my @re_parts           = sort { length $a <=> length $b } keys %$re_map;
-    my $re_refs            = '(?i:[\d:,;\s\-]|dna|ro|&)*';
-    my $re_refs_req        = '(?i:(?:[\d:,;\s\-]|dna|ro|&)+:(?:[\d:,;\s\-]|dna|ro|&)+)+';
+    my @re_parts           = sort { length $b <=> length $a } keys %$re_map;
+    my $re_refs            = '(?i:[\d:,;\s\-]|dna|ro|&)*\.?';
+    my $re_refs_req        = '(?i:(?:[\d:,;\s\-]|dna|ro|&)+:(?:[\d:,;\s\-]|dna|ro|&)+)+\.?';
     my $re_refs_string     = '\b(' . join( '|', map { $re_refs     . $_ } @re_parts ) . ')\b';
     my $re_refs_req_string = '\b(' . join( '|', map { $re_refs_req . $_ } @re_parts ) . ')\b';
 
@@ -1124,47 +1116,113 @@ sub _list ( $start, $stop ) {
     return @list;
 };
 
-sub _expand ( $self, $book, $start, $stop ) {
-    my $start_ch = ( $start =~ s/(\d+):// ) ? $1 : 0;
-    my $stop_ch  = ( $stop  =~ s/(\d+):// ) ? $1 : 0;
+sub expand_ranges ( $self, $book, $text, $compress = 0 ) {
+    my $expand = sub ( $start, $stop ) {
+        my $start_ch = ( $start =~ s/(\d+):// ) ? $1 : 0;
+        my $stop_ch  = ( $stop  =~ s/(\d+):// ) ? $1 : 0;
 
-    if ( not $start_ch and not $stop_ch ) {
-        return join( ',', _list( $start, $stop ) );
-    }
-    elsif ( $start_ch and not $stop_ch ) {
-        if ( $stop < $start ) {
-            $stop_ch = $stop;
-            $stop    = $self->_bible_data->{lengths}{$book}[ $stop_ch - 1 ];
+        if ( not $start_ch and $stop_ch and $start > $stop_ch ) {
+            # A: "5-3:4" = translated to "5:1-3:4"
+
+            $start_ch = $start;
+            $start    = 1;
         }
 
-        return join( ',', grep { defined }
-            $start_ch . ':' . join( ',', _list( $start, $stop ) ),
-            ( ($stop_ch) ? join( ',', _list( $start_ch + 1, $stop_ch ) ) : undef ),
-        );
-    }
-    elsif ( not $start_ch and $stop_ch ) {
-        $start_ch = $start;
-        $start    = 1;
+        my $skip_chapter_assumption_check = 0;
+        if ( $start_ch and $stop_ch and $start and $stop and $start_ch == $stop_ch ) {
+            if ( $start <= $stop ) {
+                # B: "3:4-3:7" = translated to "3:4-7"
 
-        return join( ':',
-            join( ',', _list( $start_ch, $stop_ch ) ),
-            join( ',', _list( $start, $stop ) ),
-        );
-    }
-    elsif ( $start_ch and $stop_ch ) {
-        return join( ',', grep { defined }
-            $start_ch . ':' . join( ',', _list(
-                $start,
-                $self->_bible_data->{lengths}{$book}[ $start_ch - 1 ],
-            ) ),
-            (
-                ( $stop_ch - $start_ch > 1 )
-                    ? join( ',', _list( $start_ch + 1, $stop_ch - 1 ) )
-                    : undef
-            ),
-            $stop_ch . ':' . join( ',', _list( 1, $stop ) ),
-        );
-    }
+                $stop_ch = 0;
+            }
+            else {
+                # Q: "3:37-3:4" is the reverse of 3:4-3:37
+
+                $stop_ch = 0;
+                $skip_chapter_assumption_check = 1;
+            }
+        }
+
+        my $expance = '';
+
+        if ( not $start_ch and not $stop_ch ) {
+            # C: "3-3" = consider as "3"
+            # D: "3-5" = consider as a simple range
+            # E: "5-3" = consider as a simple reversed range
+
+            $expance = join( ',', _list( $start, $stop ) );
+        }
+
+        elsif ( $start_ch and not $stop_ch ) {
+            # F: "1:3-15" = consider 3-15 as verses
+            # G: "1:15-3" = consider 3 a chapter
+            # H: "1:3-3"  = consider the second 3 a chapter
+            # I: "3:2-3"  = consider 2-3 as verses
+            # J: "3:3-2"  = consider 3-2 as verses
+
+            if ( $start >= $stop and $stop > $start_ch and not $skip_chapter_assumption_check ) {
+                $stop_ch = $stop;
+                $stop    = $self->_bible_data->{lengths}{$book}[ $start_ch - 1 ];
+            }
+
+            $expance = join( ';', grep { defined }
+                $start_ch . ':' . join( ',', _list( $start, $stop ) ),
+                ( ($stop_ch) ? join( ';', _list( $start_ch + 1, $stop_ch ) ) : undef ),
+            );
+        }
+
+        elsif ( not $start_ch and $stop_ch ) {
+            # K: "3-5:2" = 3-4 are full chapters; plus 5:1-5:2
+            # L: "3-3:2" = interpretted as "3:1-2"
+
+            $start_ch = $start;
+            $start    = 1;
+
+            $expance = join( ':',
+                join( ';', _list( $start_ch, $stop_ch ) ),
+                join( ',', _list( $start, $stop ) ),
+            );
+        }
+
+        elsif ( $start_ch and $stop_ch ) {
+            # M: "3:4-4:7" becomes "3:4-*;4:1-7"
+            # N: "4:7-3:4" becomes reverse of "3:4-*;4:1-7"
+            # O: "3:4-5:2" becomes "3:4-*;4;5:1-2"
+            # P: "5:2-3:4" becomes reverse of "3:4-*;4;5:2-*"
+
+            my $reversed = 0;
+            if ( $start_ch >= $stop_ch ) {
+                ( $start_ch, $stop_ch, $start, $stop ) = ( $stop_ch, $start_ch, $stop, $start );
+                $reversed = 1;
+            }
+
+            my $reverse = sub { ($reversed) ? reverse(@_) : @_ };
+
+            $expance = join( ';', grep { defined }
+                $reverse->(
+                    $start_ch . ':' . join( ',', $reverse->( _list(
+                        $start,
+                        $self->_bible_data->{lengths}{$book}[ $start_ch - 1 ],
+                    ) ) ),
+                    (
+                        ( $stop_ch - $start_ch > 1 )
+                            ? join( ',', $reverse->( _list( $start_ch + 1, $stop_ch - 1 ) ) )
+                            : undef
+                    ),
+                    $stop_ch . ':' . join( ',', $reverse->( _list( 1, $stop ) ) ),
+                ),
+            );
+        }
+
+        $expance;
+    };
+
+    $text =~ s/[\s,]+/,/g;
+    $text =~ s/^,//g;
+    $text =~ s/(\d+(?::\d+)?)\-(\d+(?::\d+)?)/ $expand->( $1, $2 ) /ge;
+    $text =~ s/([,;])/$1 /g unless $compress;
+
+    return $text;
 };
 
 sub in ( $self, @input ) {
@@ -1181,7 +1239,7 @@ sub in ( $self, @input ) {
         : $self->_bible_data->{re_books_i};
 
     for my $string (@input) {
-        $string = scalar( reverse $string );
+        $string = scalar( reverse $string // '' );
         my @processed;
         while ( $string =~ /$re_refs/ ) {
             my ( $pre, $ref, $post ) = split( /$re_refs/, $string, 2 );
@@ -1208,10 +1266,7 @@ sub in ( $self, @input ) {
             $ref = scalar reverse $ref;
 
             if ( $ref =~ /([\d:,;\s\-]+)$/ ) {
-                my $range = $1 || '';
-                $range =~ s/[\s,]+/,/g;
-                $range =~ s/^,//g;
-                $range =~ s/(\d+(?::\d+)?)\-(\d+(?::\d+)?)/ $self->_expand( $book, $1, $2 ) /ge;
+                my $range = $self->expand_ranges( $book, $1, 1 );
 
                 my $verse_context = 0;
                 my $last_d        = 0;
@@ -1219,7 +1274,7 @@ sub in ( $self, @input ) {
                 while ( $range =~ s/^(\d+)([:,;]?)\D*//g ) {
                     my ( $d, $s ) = ( $1, $2 || '' );
 
-                    $verse_context = 0 if ( $d <= $last_d );
+                    $verse_context = 0 if ( $s eq ':' or $d <= $last_d );
 
                     unless ($verse_context) {
                         push( @$numbers, [$d] );
@@ -1269,31 +1324,70 @@ sub as_array ( $self, $data = undef ) {
         )
     ) {
         $data //= [ map { grep { ref } @$_ } @{ $self->_data } ];
+        $data = [
+            map { [
+                map {
+                    ( ref $_ ) ? [
+                        map {
+                            ( ref $_ ) ? [
+                                map {
+                                    ( ref $_ ) ? [
+                                        @$_
+                                    ] : $_
+                                } @$_
+                            ] : $_
+                        } @$_
+                    ] : $_
+                } @$_
+            ] }
+            @$data
+        ];
+
+        $data = [ map {
+            my $book = $_->[0];
+
+            if ( ref $_->[1] ) {
+                $_->[1] = [ map {
+                    $_->[1] //= [ 1 .. ( $self->_bible_data->{lengths}{$book}[ $_->[0] - 1 ] || 0 ) ];
+                    $_;
+                } @{ $_->[1] } ];
+            }
+            else {
+                my $chapter;
+                $_->[1] = [ map { [ ++$chapter, [ 1 .. $_ ] ] } @{ $self->_bible_data->{lengths}{$book} } ];
+            }
+
+            $_;
+        } @$data ] if ( $self->add_detail );
 
         if ( $self->sorting ) {
             my $data_by_book = {};
-            push( @{ $data_by_book->{ $_->[0] } }, @{ $_->[1] } ) for (@$data);
+            push( @{ $data_by_book->{ $_->[0] } }, @{ $_->[1] || [] } ) for (@$data);
 
             $data = [
                 map {
+                    my $book = [ $_->[1] ];
+
                     my $dedup;
                     for my $chapter ( @{ $data_by_book->{ $_->[1] } } ) {
                         $dedup->{ $chapter->[0] } //= {};
                         $dedup->{ $chapter->[0] }{$_} = 1 for ( @{ $chapter->[1] } );
                     }
-                    [
-                        $_->[1],
-                        [
-                            map {
-                                my $chapter = [$_];
-                                my @verses = keys %{ $dedup->{$_} };
-                                push( @$chapter, [ sort { $a <=> $b } @verses ] ) if @verses;
-                                $chapter;
-                            }
-                            sort { $a <=> $b }
-                            keys %$dedup
-                        ],
+
+                    my $chapters = [
+                        map {
+                            my $chapter = [$_];
+                            my @verses = keys %{ $dedup->{$_} };
+                            push( @$chapter, [ sort { $a <=> $b } @verses ] ) if @verses;
+                            $chapter;
+                        }
+                        sort { $a <=> $b }
+                        keys %$dedup
                     ];
+
+                    push( @$book, $chapters ) if (@$chapters);
+
+                    $book;
                 }
                 sort { $a->[0] <=> $b->[0] }
                 map { [ $self->_bible_data->{book_order}{$_}, $_ ] }
@@ -1313,17 +1407,19 @@ sub as_array ( $self, $data = undef ) {
     return (wantarray) ? @{ $self->_cache->{data} } : $self->_cache->{data};
 }
 
-sub as_hash ($self) {
-    my $data = {};
+sub as_hash ( $self, $data = undef ) {
+    my $build = {};
 
-    for my $book_block ( $self->as_array ) {
+    for my $book_block ( $self->as_array($data) ) {
         my ( $book_name, $chapters ) = @$book_block;
+
+        $build->{$book_name} = {};
         for (@$chapters) {
-            push( @{ $data->{$book_name}{ $_->[0] } }, @{ $_->[1] || [] } );
+            push( @{ $build->{$book_name}{ $_->[0] } }, @{ $_->[1] || [] } );
         }
     }
 
-    return (wantarray) ? %$data : $data;
+    return (wantarray) ? %$build : $build;
 }
 
 sub _compress_range ( $items = [] ) {
@@ -1353,81 +1449,173 @@ sub _compress_range ( $items = [] ) {
     return (wantarray) ? @items : join( ', ', @items );
 }
 
-sub _as_getter ( $self, $method = 'as_books', $data = undef ) {
-    my ( @refs, @chapters, $last_book );
 
-    my $flush_chapters = sub {
-        if (@chapters) {
-            my ($book) = @_;
-            push( @refs, "$book " . _compress_range( \@chapters ) );
-            @chapters = ();
-        }
-    };
 
-    for my $ref ( $self->as_array($data) ) {
-        my $book = $ref->[0];
 
-        for my $part ( @{ $ref->[1] } ) {
-            my $chapter = $part->[0];
 
-            if ( $part->[1] ) {
-                if ( $method eq 'as_verses' ) {
-                    push( @refs, "$book $chapter:$_" ) for ( @{ $part->[1] } );
-                }
-                elsif ( $method eq 'as_runs' ) {
-                    push( @refs, "$book $chapter:$_") for ( _compress_range( $part->[1] ) );
-                }
-                elsif ( $method eq 'as_chapters' ) {
-                    push( @refs, "$book $chapter:" . _compress_range( $part->[1] ) );
-                }
-                elsif ( $method eq 'as_books' )  {
-                    $flush_chapters->($book);
 
-                    if ( not $last_book or $last_book ne $book ) {
-                        push( @refs, "$book $chapter:" . _compress_range( $part->[1] ) );
-                    }
-                    else {
-                        $refs[-1] .= ", $chapter:" . _compress_range( $part->[1] );
-                    }
-                }
-            }
-            else {
-                if ( $method eq 'as_books' ) {
-                    push( @chapters, $chapter );
-                }
-                else {
-                    push( @refs, "$book $chapter" );
-                }
-            }
 
-            $last_book = $book if ( $method eq 'as_books' );
-        }
 
-        $flush_chapters->($book) if ( $method eq 'as_books' );
-    }
 
-    return \@refs;
-}
+
+
+
+
+
+
+
+
+
+
 
 sub as_verses ( $self, $data = undef ) {
-    my $refs = $self->_as_getter( 'as_verses', $data );
-    return (wantarray) ? @$refs : $refs;
+    $data = $self->as_array($data);
+
+    my $items = [
+        map {
+            my $book = $_->[0];
+
+            if ( $_->[1] ) {
+                map {
+                    my $chapter = $_->[0];
+
+                    if ( $_->[1] ) {
+                        map { "$book $chapter:$_" } @{ $_->[1] };
+                    }
+                    else {
+                        "$book $chapter";
+                    }
+                } @{ $_->[1] };
+            }
+            else {
+                $book;
+            }
+        } @$data
+    ];
+
+    return (wantarray) ? @$items : $items;
 }
 
 sub as_runs ( $self, $data = undef ) {
-    my $refs = $self->_as_getter( 'as_runs', $data );
-    return (wantarray) ? @$refs : $refs;
+    $data = $self->as_array($data);
+
+    my $items = [
+        map {
+            my $book = $_->[0];
+
+            if ( $_->[1] ) {
+                map {
+                    my $chapter = $_->[0];
+
+                    if ( $_->[1] ) {
+                        map { "$book $chapter:$_" } _compress_range( $_->[1] );
+                    }
+                    else {
+                        "$book $chapter";
+                    }
+                } @{ $_->[1] };
+            }
+            else {
+                $book;
+            }
+        } @$data
+    ];
+
+    return (wantarray) ? @$items : $items;
 }
 
 sub as_chapters ( $self, $data = undef ) {
-    my $refs = $self->_as_getter( 'as_chapters', $data );
-    return (wantarray) ? @$refs : $refs;
+    $data = $self->as_array($data);
+
+    my $items = [
+        map {
+            my $book = $_->[0];
+
+            if ( $_->[1] ) {
+                map {
+                    my $chapter = $_->[0];
+
+                    if ( $_->[1] ) {
+                        "$book $chapter:" . join( ', ', _compress_range( $_->[1] ) );
+                    }
+                    else {
+                        "$book $chapter";
+                    }
+                } @{ $_->[1] };
+            }
+            else {
+                $book;
+            }
+        } @$data
+    ];
+
+    return (wantarray) ? @$items : $items;
 }
 
 sub as_books ( $self, $data = undef ) {
-    my $refs = $self->_as_getter( 'as_books', $data );
-    return (wantarray) ? @$refs : $refs;
+    $data = $self->as_array($data);
+
+    my $items = [
+        map {
+            my $book = $_->[0];
+
+            if ( $_->[1] ) {
+                my ( @build, @buffer );
+
+                my $flush_buffer = sub {
+                    if (@buffer) {
+                        push( @build, join( '; ', _compress_range(\@buffer) ) );
+                        @buffer = ();
+                    }
+                };
+
+                for ( @{ $_->[1] } ) {
+                    my $chapter = $_->[0];
+
+                    if ( $_->[1] ) {
+                        $flush_buffer->();
+                        push( @build, $chapter . ':' . join( ', ', _compress_range( $_->[1] ) ) );
+                    }
+                    else {
+                        push( @buffer, $chapter );
+                    }
+                }
+
+                $flush_buffer->();
+
+                $book . ' ' . join( '; ', @build );
+            }
+            else {
+                $book;
+            }
+        } @$data
+    ];
+
+    return (wantarray) ? @$items : $items;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 sub refs ( $self, $data = undef ) {
     return join( '; ', $self->as_books($data) );
