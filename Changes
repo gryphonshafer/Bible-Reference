@@ -1,6 +1,8 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+
+1.05      2020-10-10 12:06:43-07:00 America/Los_Angeles
         - Major input parsing code rewrite to handle a broader set of edge cases
         - Add boolean setting: add_detail
         - Add method: expand_ranges
