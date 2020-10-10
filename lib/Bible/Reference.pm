@@ -1,7 +1,7 @@
 package Bible::Reference;
 # ABSTRACT: Simple Bible reference parser, tester, and canonicalizer
 
-use 5.014;
+use 5.020;
 
 use exact;
 use exact::class;
@@ -1449,25 +1449,6 @@ sub _compress_range ( $items = [] ) {
     return (wantarray) ? @items : join( ', ', @items );
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 sub as_verses ( $self, $data = undef ) {
     $data = $self->as_array($data);
 
@@ -1594,29 +1575,6 @@ sub as_books ( $self, $data = undef ) {
     return (wantarray) ? @$items : $items;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 sub refs ( $self, $data = undef ) {
     return join( '; ', $self->as_books($data) );
 }
@@ -1657,7 +1615,8 @@ __END__
 
 =begin :badges
 
-=fouild Status](https://travis-ci.org/gryphonshafer/Bible-Reference.svg)](https://travis-ci.org/gryphonshafer/Bible-Reference)
+=for markdown
+[![Build Status](https://travis-ci.org/gryphonshafer/Bible-Reference.svg)](https://travis-ci.org/gryphonshafer/Bible-Reference)
 [![Coverage Status](https://coveralls.io/repos/gryphonshafer/Bible-Reference/badge.png)](https://coveralls.io/r/gryphonshafer/Bible-Reference)
 
 =end :badges

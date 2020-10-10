@@ -12,7 +12,8 @@ use constant {
         '',
         'Text with no Reference 3:16 data included',
         'Text Samuel 3:15 said in 1 Samuel 4:16 that 2 Samuel 3-5 was as clear as 1 Peter in full',
-        'Text Pet text II Pet text II Pet 3:15 text 2pt 3-4 text 2 Peter 3:15-17, 18, 20-22, 2 Peter 5:1 text',
+        'Text Pet text II Pet text II Pet 3:15 text 2pt 3-4 text ' .
+            '2 Peter 3:15-17, 18, 20-22, 2 Peter 5:1 text',
         'The book of rev. The verse of rEv. 3:15. The book of Rev.',
         'Books of Revel, Gal, and Roma exist',
         'Verses Mark 12:4 and Mark 12:3-5 and Mark 12:4-7, 13:1-2 and Genesis 4:1 and Genesis 1:2 exist',
@@ -124,7 +125,8 @@ sub in_and_clear : Test(10) {
         ],
         [ 'Text with ', [ 'Romans', [ [ 12, [16] ], [ 13, [ 14, 15 ] ], ], ], ' in it.' ],
         [ 'Even more text with ', [ 'James', [ [ 1, [5] ] ] ], ' in it.' ],
-        [ 'And one last bit of text with ', [ '1 Corinthians', [ [ 12, [ 8, 9, 10, 11, 12 ] ] ] ], ' in it.' ],
+        [ 'And one last bit of text with ',
+            [ '1 Corinthians', [ [ 12, [ 8, 9, 10, 11, 12 ] ] ] ], ' in it.' ],
     ], 'in() is set correctly' );
 
     lives_ok(
@@ -682,7 +684,8 @@ sub as_text : Test(2) {
             '',
             'Text with no Reference 3:16 data included',
             'Text Samuel 3:15 said in 1 Samuel 4:16 that 2 Samuel 3-5 was as clear as 1 Peter in full',
-            'Text Pet text 2 Peter text 2 Peter 3:15 text 2 Peter 3-4 text 2 Peter 3:15-18, 20-22, 2 Peter 5:1 text',
+            'Text Pet text 2 Peter text 2 Peter 3:15 text 2 Peter 3-4 text ' .
+                '2 Peter 3:15-18, 20-22, 2 Peter 5:1 text',
             'The book of Revelation. The verse of Revelation 3:15. The book of Revelation.',
             'Books of Revelation, Galatians, and Romans exist',
             'Verses Mark 12:4 and Mark 12:3-5 and Mark 12:4-7; 13:1-2 and Genesis 4:1 and Genesis 1:2 exist',
