@@ -15,9 +15,10 @@ version 1.05
 
     my $r = Bible::Reference->new;
     $r = Bible::Reference->new(
-        bible    => 'Protestant', # or "Orthodox" or "Catholic" or "Vulgate"
-        acronyms => 0,            # or 1
-        sorting  => 1,            # or 0 to preserve input order
+        bible      => 'Protestant', # or "Orthodox" or "Catholic" or "Vulgate"
+        acronyms   => 0,            # or 1
+        sorting    => 1,            # or 0 to preserve input order
+        add_detail => 0,            # or 1 to add implied chapter and verse detail
     );
 
     $r = $r->in('Text with I Pet 3:16 and Rom 12:13-14,17 references in it.');
@@ -49,6 +50,7 @@ version 1.05
     $r->bible('Vulgate');        # switch to the Vulgate Bible
     $r->acronyms(1);             # output acronyms instead of full book names
     $r->sorting(0);              # deactivate sorting of references
+    $r->add_detail(1);           # turn on adding chapter and verse detail
     $r->require_verse_match(1);  # require verses in references for matching
     $r->require_book_ucfirst(1); # require book names to be ucfirst for matching
 
@@ -274,6 +276,19 @@ acronym.
 When you call this method with good input, it will save the new Bible and
 internally call `bible()` to set the new Bible as active.
 
+## expand\_ranges
+
+This is a helper method you'll likely not need to use directly, but it's
+provided just in case you do. It requires 2 strings: a book name and a
+chapter/verse ranges string. It will return a string represented the "expanded"
+chapter/verse range.
+
+    $r->expand_ranges( 'Mark', '1:3-7' );
+    # returns "1:3, 4, 5, 6, 7"
+
+    $r->expand_ranges( 'Mark', '4:37-5:9' );
+    # returns "4:37, 38, 39, 40, 41; 5:1, 2, 3, 4, 5, 6, 7, 8, 9"
+
 # HANDLING MATCHING ERRORS
 
 By default, the module does its best to find things that look like valid
@@ -295,6 +310,11 @@ You can optionally set `require_book_ucfirst` to a true value. This will cause
 the matching algorithm to only work on reference patterns that contain what
 looks like a book that starts with a capital letter (instead of the default of
 any case).
+
+Another option to consider is adjusting the `minimum_book_length` value. It
+sets the minimum length of characters to match a book name. It's default set to
+3\. Given a book like "Genesis", this will mean "Gen" and "Gene" and "Genes"
+matches, but "Ge" won't.
 
 # SEE ALSO
 
