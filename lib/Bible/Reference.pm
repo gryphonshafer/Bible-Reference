@@ -1449,94 +1449,10 @@ sub _compress_range ( $items = [] ) {
     return (wantarray) ? @items : join( ', ', @items );
 }
 
-sub as_verses ( $self, $data = undef ) {
+sub _as_type ( $self, $type, $data = undef ) {
     $data = $self->as_array($data);
 
-    my $items = [
-        map {
-            my $book = $_->[0];
-
-            if ( $_->[1] ) {
-                map {
-                    my $chapter = $_->[0];
-
-                    if ( $_->[1] ) {
-                        map { "$book $chapter:$_" } @{ $_->[1] };
-                    }
-                    else {
-                        "$book $chapter";
-                    }
-                } @{ $_->[1] };
-            }
-            else {
-                $book;
-            }
-        } @$data
-    ];
-
-    return (wantarray) ? @$items : $items;
-}
-
-sub as_runs ( $self, $data = undef ) {
-    $data = $self->as_array($data);
-
-    my $items = [
-        map {
-            my $book = $_->[0];
-
-            if ( $_->[1] ) {
-                map {
-                    my $chapter = $_->[0];
-
-                    if ( $_->[1] ) {
-                        map { "$book $chapter:$_" } _compress_range( $_->[1] );
-                    }
-                    else {
-                        "$book $chapter";
-                    }
-                } @{ $_->[1] };
-            }
-            else {
-                $book;
-            }
-        } @$data
-    ];
-
-    return (wantarray) ? @$items : $items;
-}
-
-sub as_chapters ( $self, $data = undef ) {
-    $data = $self->as_array($data);
-
-    my $items = [
-        map {
-            my $book = $_->[0];
-
-            if ( $_->[1] ) {
-                map {
-                    my $chapter = $_->[0];
-
-                    if ( $_->[1] ) {
-                        "$book $chapter:" . join( ', ', _compress_range( $_->[1] ) );
-                    }
-                    else {
-                        "$book $chapter";
-                    }
-                } @{ $_->[1] };
-            }
-            else {
-                $book;
-            }
-        } @$data
-    ];
-
-    return (wantarray) ? @$items : $items;
-}
-
-sub as_books ( $self, $data = undef ) {
-    $data = $self->as_array($data);
-
-    my $items = [
+    return [
         map {
             my $book = $_->[0];
 
@@ -1554,24 +1470,62 @@ sub as_books ( $self, $data = undef ) {
                     my $chapter = $_->[0];
 
                     if ( $_->[1] ) {
-                        $flush_buffer->();
-                        push( @build, $chapter . ':' . join( ', ', _compress_range( $_->[1] ) ) );
+                        if ( $type eq 'verses' ) {
+                            push( @build, map { "$book $chapter:$_" } @{ $_->[1] } );
+                        }
+                        elsif ( $type eq 'runs' ) {
+                            push( @build, map { "$book $chapter:$_" } _compress_range( $_->[1] ) );
+                        }
+                        elsif ( $type eq 'chapters' ) {
+                            push( @build, "$book $chapter:" . join( ', ', _compress_range( $_->[1] ) ) );
+                        }
+                        else {
+                            $flush_buffer->();
+                            push( @build, $chapter . ':' . join( ', ', _compress_range( $_->[1] ) ) );
+                        }
                     }
                     else {
-                        push( @buffer, $chapter );
+                        unless ( $type eq 'books' ) {
+                            push( @build, "$book $chapter" );
+                        }
+                        else {
+                            push( @buffer, $chapter );
+                        }
                     }
                 }
 
-                $flush_buffer->();
-
-                $book . ' ' . join( '; ', @build );
+                unless ( $type eq 'books' ) {
+                    @build;
+                }
+                else {
+                    $flush_buffer->();
+                    $book . ' ' . join( '; ', @build );
+                }
             }
             else {
                 $book;
             }
         } @$data
     ];
+}
 
+sub as_verses ( $self, $data = undef ) {
+    my $items = $self->_as_type( 'verses', $data );
+    return (wantarray) ? @$items : $items;
+}
+
+sub as_runs ( $self, $data = undef ) {
+    my $items = $self->_as_type( 'runs', $data );
+    return (wantarray) ? @$items : $items;
+}
+
+sub as_chapters ( $self, $data = undef ) {
+    my $items = $self->_as_type( 'chapters', $data );
+    return (wantarray) ? @$items : $items;
+}
+
+sub as_books ( $self, $data = undef ) {
+    my $items = $self->_as_type( 'books', $data );
     return (wantarray) ? @$items : $items;
 }
 
