@@ -1,6 +1,8 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+        - Migrate Travis CI and Coveralls to GitHub Actions and Codecov
+        - Update copyright year
 
 1.05      2020-10-10 12:06:43-07:00 America/Los_Angeles
         - Major input parsing code rewrite to handle a broader set of edge cases

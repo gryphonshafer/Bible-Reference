@@ -4,10 +4,10 @@ Bible::Reference - Simple Bible reference parser, tester, and canonicalizer
 
 # VERSION
 
-version 1.05
+version 1.06
 
-[![Build Status](https://travis-ci.org/gryphonshafer/Bible-Reference.svg)](https://travis-ci.org/gryphonshafer/Bible-Reference)
-[![Coverage Status](https://coveralls.io/repos/gryphonshafer/Bible-Reference/badge.png)](https://coveralls.io/r/gryphonshafer/Bible-Reference)
+[![build](https://github.com/gryphonshafer/Bible-Reference/workflows/build/badge.svg)](https://github.com/gryphonshafer/Bible-Reference/actions?query=workflow%3Abuild)
+[![codecov](https://codecov.io/gh/gryphonshafer/Bible-Reference/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/Bible-Reference)
 
 # SYNOPSIS
 
@@ -322,8 +322,8 @@ You can look for additional information at:
 
 - [GitHub](https://github.com/gryphonshafer/Bible-Reference)
 - [MetaCPAN](https://metacpan.org/pod/Bible::Reference)
-- [Travis CI](https://travis-ci.org/gryphonshafer/Bible-Reference)
-- [Coveralls](https://coveralls.io/r/gryphonshafer/Bible-Reference)
+- [GitHub Actions](https://github.com/gryphonshafer/Bible-Reference/actions)
+- [Codecov](https://codecov.io/gh/gryphonshafer/Bible-Reference)
 - [CPANTS](http://cpants.cpanauthors.org/dist/Bible-Reference)
 - [CPAN Testers](http://www.cpantesters.org/distro/B/Bible-Reference.html)
 
@@ -333,7 +333,7 @@ Gryphon Shafer <gryphon@cpan.org>
 
 # COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2020 by Gryphon Shafer.
+This software is copyright (c) 2021 by Gryphon Shafer.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
