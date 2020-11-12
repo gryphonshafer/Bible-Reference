@@ -1570,8 +1570,8 @@ __END__
 =begin :badges
 
 =for markdown
-[![Build Status](https://travis-ci.org/gryphonshafer/Bible-Reference.svg)](https://travis-ci.org/gryphonshafer/Bible-Reference)
-[![Coverage Status](https://coveralls.io/repos/gryphonshafer/Bible-Reference/badge.png)](https://coveralls.io/r/gryphonshafer/Bible-Reference)
+[![build](https://github.com/gryphonshafer/Bible-Reference/workflows/build/badge.svg)](https://github.com/gryphonshafer/Bible-Reference/actions?query=workflow%3Abuild)
+[![codecov](https://codecov.io/gh/gryphonshafer/Bible-Reference/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/Bible-Reference)
 
 =end :badges
 
@@ -1889,8 +1889,8 @@ You can look for additional information at:
 =for :list
 * L<GitHub|https://github.com/gryphonshafer/Bible-Reference>
 * L<MetaCPAN|https://metacpan.org/pod/Bible::Reference>
-* L<Travis CI|https://travis-ci.org/gryphonshafer/Bible-Reference>
-* L<Coveralls|https://coveralls.io/r/gryphonshafer/Bible-Reference>
+* L<GitHub Actions|https://github.com/gryphonshafer/Bible-Reference/actions>
+* L<Codecov|https://codecov.io/gh/gryphonshafer/Bible-Reference>
 * L<CPANTS|http://cpants.cpanauthors.org/dist/Bible-Reference>
 * L<CPAN Testers|http://www.cpantesters.org/distro/B/Bible-Reference.html>
 
