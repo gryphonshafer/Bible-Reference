@@ -6,7 +6,7 @@ Bible::Reference - Simple Bible reference parser, tester, and canonicalizer
 
 version 1.06
 
-[![build](https://github.com/gryphonshafer/Bible-Reference/workflows/build/badge.svg)](https://github.com/gryphonshafer/Bible-Reference/actions?query=workflow%3Abuild)
+[![test](https://github.com/gryphonshafer/Bible-Reference/workflows/test/badge.svg)](https://github.com/gryphonshafer/Bible-Reference/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/gryphonshafer/Bible-Reference/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/Bible-Reference)
 
 # SYNOPSIS
