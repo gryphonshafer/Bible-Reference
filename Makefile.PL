@@ -22,15 +22,10 @@ my %WriteMakefileArgs = (
   },
   "TEST_REQUIRES" => {
     "File::Spec" => 0,
-    "FindBin" => 0,
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
-    "Test::Class" => 0,
-    "Test::Class::Load" => 0,
+    "Test2::V0" => 0,
     "Test::More" => 0,
-    "Test::Most" => 0,
-    "constant" => 0,
-    "parent" => 0,
     "strict" => 0,
     "warnings" => 0
   },
@@ -43,17 +38,12 @@ my %WriteMakefileArgs = (
 
 my %FallbackPrereqs = (
   "File::Spec" => 0,
-  "FindBin" => 0,
   "IO::Handle" => 0,
   "IPC::Open3" => 0,
-  "Test::Class" => 0,
-  "Test::Class::Load" => 0,
+  "Test2::V0" => 0,
   "Test::More" => 0,
-  "Test::Most" => 0,
-  "constant" => 0,
   "exact" => 0,
   "exact::class" => 0,
-  "parent" => 0,
   "strict" => 0,
   "warnings" => 0
 );
