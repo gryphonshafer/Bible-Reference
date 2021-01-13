@@ -1,6 +1,7 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+        - Override some minimum version reqs in dist.ini
 
 1.06      2021-01-12 09:25:43-08:00 America/Los_Angeles
         - Migrate to Test2::V0

@@ -17,8 +17,8 @@ my %WriteMakefileArgs = (
   "MIN_PERL_VERSION" => "5.020",
   "NAME" => "Bible::Reference",
   "PREREQ_PM" => {
-    "exact" => 0,
-    "exact::class" => 0
+    "exact" => "1.14",
+    "exact::class" => "1.10"
   },
   "TEST_REQUIRES" => {
     "File::Spec" => 0,
@@ -29,7 +29,7 @@ my %WriteMakefileArgs = (
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "1.06",
+  "VERSION" => "1.07",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -42,8 +42,8 @@ my %FallbackPrereqs = (
   "IPC::Open3" => 0,
   "Test2::V0" => 0,
   "Test::More" => 0,
-  "exact" => 0,
-  "exact::class" => 0,
+  "exact" => "1.14",
+  "exact::class" => "1.10",
   "strict" => 0,
   "warnings" => 0
 );
