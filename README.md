@@ -4,7 +4,7 @@ Bible::Reference - Simple Bible reference parser, tester, and canonicalizer
 
 # VERSION
 
-version 1.07
+version 1.08
 
 [![test](https://github.com/gryphonshafer/Bible-Reference/workflows/test/badge.svg)](https://github.com/gryphonshafer/Bible-Reference/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/gryphonshafer/Bible-Reference/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/Bible-Reference)
@@ -288,6 +288,12 @@ chapter/verse range.
 
     $r->expand_ranges( 'Mark', '4:37-5:9' );
     # returns "4:37, 38, 39, 40, 41; 5:1, 2, 3, 4, 5, 6, 7, 8, 9"
+
+## get\_bible\_structure
+
+This method will return an arrayref containing an arrayref per book (in order)
+that contains two elements: the name of the book and an arrayref of the maximum
+verse number per chapter.
 
 # HANDLING MATCHING ERRORS
 

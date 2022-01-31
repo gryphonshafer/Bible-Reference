@@ -1,6 +1,7 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+        - Add get_bible_structure method
 
 1.07      2021-01-13 11:05:23-08:00 America/Los_Angeles
         - Override some minimum version reqs in dist.ini

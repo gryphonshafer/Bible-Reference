@@ -1089,7 +1089,7 @@ sub bible ( $self, $name = undef ) {
         [ qr/\b$_\b/i, $this_book ];
     } @re_parts ];
 
-    $bible_data->{lengths}  = {
+    $bible_data->{lengths} = {
         map {
             $bible_data->{books}[$_] => $self->_lengths->{$bible}[$_]
         } 0 .. @{ $bible_data->{books} } - 1
@@ -1562,6 +1562,11 @@ sub set_bible_data ( $self, $bible = undef, $data = undef ) {
     return $self;
 }
 
+sub get_bible_structure ( $self, $bible = undef ) {
+    $self->bible($bible) if ($bible);
+    return [ map { [ $_, $self->_bible_data->{lengths}{$_} ] } @{ $self->_bible_data->{books} } ];
+}
+
 1;
 __END__
 
@@ -1854,6 +1859,12 @@ chapter/verse range.
 
     $r->expand_ranges( 'Mark', '4:37-5:9' );
     # returns "4:37, 38, 39, 40, 41; 5:1, 2, 3, 4, 5, 6, 7, 8, 9"
+
+=head2 get_bible_structure
+
+This method will return an arrayref containing an arrayref per book (in order)
+that contains two elements: the name of the book and an arrayref of the maximum
+verse number per chapter.
 
 =head1 HANDLING MATCHING ERRORS
 
