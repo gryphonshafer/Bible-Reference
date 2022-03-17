@@ -1,6 +1,7 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+        - Minor documentation update
 
 1.08      2022-01-31 09:58:11-08:00 America/Los_Angeles
         - Add get_bible_structure method
