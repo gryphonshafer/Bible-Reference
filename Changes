@@ -1,6 +1,8 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+
+1.10      2022-03-18 13:23:08-07:00 America/Los_Angeles
         - Add additional acronyms to match for: Kings, Philemon, and James
 
 1.09      2022-03-17 10:20:06-07:00 America/Los_Angeles
