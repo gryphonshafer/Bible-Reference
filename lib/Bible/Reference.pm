@@ -1567,6 +1567,31 @@ sub get_bible_structure ( $self, $bible = undef ) {
     return [ map { [ $_, $self->_bible_data->{lengths}{$_} ] } @{ $self->_bible_data->{books} } ];
 }
 
+sub identify_bible ( $self, @books ) {
+    croak('No books supplied; must supply at least 1 input') unless (@books);
+
+    my $obj = $self->new( minimum_book_length  => $self->minimum_book_length );
+
+    my $bibles = [
+        sort { $b->{count} <=> $a->{count} }
+        map {
+            $obj->bible($_);
+            my $books = scalar( $obj->clear->in(@books)->as_books );
+            {
+                name  => $_,
+                books => $books,
+                count => scalar(@$books),
+            };
+        }
+        keys %{ $obj->_bibles }
+    ];
+
+    $bibles = [ grep { $bibles->[0]{count} == $_->{count} } @$bibles ]
+        if ( $bibles->[0]{count} != $bibles->[-1]{count} );
+
+    return $bibles;
+}
+
 1;
 __END__
 
@@ -1865,6 +1890,28 @@ chapter/verse range.
 This method will return an arrayref containing an arrayref per book (in order)
 that contains two elements: the name of the book and an arrayref of the maximum
 verse number per chapter.
+
+=head2 identify_bible
+
+This method is to help identify which Bible to use if you aren't sure. It
+requires a list of strings as input, each string representing a book from the
+Bible you're trying to identify. This method will then try to match these book
+names across all Bibles and will return an array of the most likely Bibles for
+your inputs.
+
+For example:
+
+    my $bibles = $r->identify_bible( 'Gen', 'Lev', '3 Mac' );
+
+The above will return:
+
+    [
+        {
+            name  => 'Orthodox',
+            count => 3,
+            books => [ 'Genesis', 'Leviticus', '3 Maccabees' ],
+        },
+    ],
 
 =head1 HANDLING MATCHING ERRORS
 

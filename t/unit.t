@@ -43,6 +43,7 @@ refs();
 as_text();
 set_bible_data();
 get_bible_structure();
+identify_bible();
 
 done_testing;
 
@@ -766,4 +767,24 @@ sub get_bible_structure {
     is( scalar(@$structure), 78, 'get_bible_structure correct size' );
     is( $structure->[23][0], '4 Maccabees', 'get_bible_structure name correct' );
     is( scalar( @{ $structure->[23][1] } ), 18, 'get_bible_structure chapters correct' );
+}
+
+sub identify_bible {
+    like(
+        dies { $obj->identify_bible },
+        qr/^No books supplied; must supply at least 1 input/,
+        'identify_bible requires input',
+    );
+
+    is(
+        $obj->identify_bible( 'Gen', 'Lev', '3 Mac' ),
+        [
+            {
+                name  => 'Orthodox',
+                count => 3,
+                books => [ 'Genesis', 'Leviticus', '3 Maccabees' ],
+            },
+        ],
+        'identify_bible identifies correct Bible',
+    );
 }
