@@ -4,7 +4,7 @@ Bible::Reference - Simple Bible reference parser, tester, and canonicalizer
 
 # VERSION
 
-version 1.10
+version 1.11
 
 [![test](https://github.com/gryphonshafer/Bible-Reference/workflows/test/badge.svg)](https://github.com/gryphonshafer/Bible-Reference/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/gryphonshafer/Bible-Reference/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/Bible-Reference)
@@ -294,6 +294,28 @@ chapter/verse range.
 This method will return an arrayref containing an arrayref per book (in order)
 that contains two elements: the name of the book and an arrayref of the maximum
 verse number per chapter.
+
+## identify\_bible
+
+This method is to help identify which Bible to use if you aren't sure. It
+requires a list of strings as input, each string representing a book from the
+Bible you're trying to identify. This method will then try to match these book
+names across all Bibles and will return an array of the most likely Bibles for
+your inputs.
+
+For example:
+
+    my $bibles = $r->identify_bible( 'Gen', 'Lev', '3 Mac' );
+
+The above will return:
+
+    [
+        {
+            name  => 'Orthodox',
+            count => 3,
+            books => [ 'Genesis', 'Leviticus', '3 Maccabees' ],
+        },
+    ],
 
 # HANDLING MATCHING ERRORS
 
