@@ -1,6 +1,8 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+
+1.11      2022-03-21 11:23:39-07:00 America/Los_Angeles
         - Add identify_bible method
         - get_bible_structure unit test coverage
 
