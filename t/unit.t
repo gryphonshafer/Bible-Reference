@@ -42,6 +42,7 @@ as_books();
 refs();
 as_text();
 set_bible_data();
+get_bible_structure();
 
 done_testing;
 
@@ -757,4 +758,12 @@ sub set_bible_data {
     is( $books[0], 'Genesis', 'Special Genesis location' );
     is( $books[1], 'Exodus', 'Special Exodus location' );
     is( $books[-1], 'Malachi', 'Special Revelation location' );
+}
+
+sub get_bible_structure {
+    my $structure = $obj->get_bible_structure('Orthodox');
+    is( ref($structure), 'ARRAY', 'get_bible_structure returns arrayref' );
+    is( scalar(@$structure), 78, 'get_bible_structure correct size' );
+    is( $structure->[23][0], '4 Maccabees', 'get_bible_structure name correct' );
+    is( scalar( @{ $structure->[23][1] } ), 18, 'get_bible_structure chapters correct' );
 }
