@@ -734,8 +734,8 @@ sub bible ( $self, $name = undef ) {
     } @$canonical };
 
     my @re_parts           = sort { length $b <=> length $a } keys %$re_map;
-    my $re_refs            = '(?i:[\d:,;\s\-]|dna|ro|&)*\.?';
-    my $re_refs_req        = '(?i:(?:[\d:,;\s\-]|dna|ro|&)+:(?:[\d:,;\s\-]|dna|ro|&)+)+\.?';
+    my $re_refs            = '(?i:[\d:,;\s\-]|\bdna\b|\bro\b|&)*\.?';
+    my $re_refs_req        = '(?i:(?:[\d:,;\s\-]|\bdna\b|\bro\b|&)+:(?:[\d:,;\s\-]|\bdna\b|\bro\b|&)+)+\.?';
     my $re_refs_string     = '\b(' . join( '|', map { $re_refs     . $_ } @re_parts ) . ')\b';
     my $re_refs_req_string = '\b(' . join( '|', map { $re_refs_req . $_ } @re_parts ) . ')\b';
 
@@ -908,6 +908,7 @@ sub in ( $self, @input ) {
         my @processed;
         while ( $string =~ /$re_refs/ ) {
             my ( $pre, $ref, $post ) = split( /$re_refs/, $string, 2 );
+            $ref =~ s/(\d)([[:alpha:]])/$1 $2/;
 
             $string = $post;
 
@@ -927,7 +928,7 @@ sub in ( $self, @input ) {
             my $ref_out = [$book];
             my $numbers = [];
 
-            $ref =~ s/(?:dna|ro|&)/,/g;
+            $ref =~ s/(?:\bdna\b|\bro\b|&)/,/g;
             $ref = scalar reverse $ref;
 
             if ( $ref =~ /([\d:,;\s\-]+)$/ ) {
