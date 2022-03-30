@@ -733,9 +733,14 @@ sub bible ( $self, $name = undef ) {
         } @matches, @{ $options->{$book} };
     } @$canonical };
 
-    my @re_parts           = sort { length $b <=> length $a } keys %$re_map;
-    my $re_refs            = '(?i:[\d:,;\s\-]|\bdna\b|\bro\b|&)*\.?';
-    my $re_refs_req        = '(?i:(?:[\d:,;\s\-]|\bdna\b|\bro\b|&)+:(?:[\d:,;\s\-]|\bdna\b|\bro\b|&)+)+\.?';
+    my @re_parts = sort { length $b <=> length $a } keys %$re_map;
+
+    my $re_refs     = '(?i:[\d:,;\s\-]|\bdna\b|\bro\b|&)*\.?';
+    my $re_refs_req =
+        '(?i:[\d:,;\s\-]|\bdna\b|\bro\b|&)*' .
+        '(?:\d\s*:\s*\d)' .
+        '(?i:[\d:,;\s\-]|\bdna\b|\bro\b|&)*\.?';
+
     my $re_refs_string     = '\b(' . join( '|', map { $re_refs     . $_ } @re_parts ) . ')\b';
     my $re_refs_req_string = '\b(' . join( '|', map { $re_refs_req . $_ } @re_parts ) . ')\b';
 
@@ -896,7 +901,7 @@ sub in ( $self, @input ) {
     my $re_refs = $self->_bible_data->{
         're_refs_' .
         ( ( $self->require_book_ucfirst ) ? 's' : 'i' ) .
-        ( ( $self->require_verse_match ) ? 'r' : '' )
+        ( ( $self->require_verse_match  ) ? 'r' : ''  )
     };
 
     my $re_books = ( $self->require_book_ucfirst )
@@ -906,8 +911,10 @@ sub in ( $self, @input ) {
     for my $string (@input) {
         $string = scalar( reverse $string // '' );
         my @processed;
-        while ( $string =~ /$re_refs/ ) {
+        while (1) {
             my ( $pre, $ref, $post ) = split( /$re_refs/, $string, 2 );
+            last unless ($ref);
+
             $ref =~ s/(\d)([[:alpha:]])/$1 $2/;
 
             $string = $post;
