@@ -1,6 +1,8 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+
+1.12      2022-03-30 09:00:05-07:00 America/Los_Angeles
         - Bible structure data update
         - Handle no space between book and chapter
         - Improve regex efficiency for verse required
