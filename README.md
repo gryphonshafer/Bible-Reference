@@ -4,7 +4,7 @@ Bible::Reference - Simple Bible reference parser, tester, and canonicalizer
 
 # VERSION
 
-version 1.11
+version 1.12
 
 [![test](https://github.com/gryphonshafer/Bible-Reference/workflows/test/badge.svg)](https://github.com/gryphonshafer/Bible-Reference/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/gryphonshafer/Bible-Reference/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/Bible-Reference)
@@ -15,7 +15,7 @@ version 1.11
 
     my $r = Bible::Reference->new;
     $r = Bible::Reference->new(
-        bible      => 'Protestant', # or "Orthodox" or "Catholic" or "Vulgate"
+        bible      => 'Protestant', # or "Orthodox" or "Catholic"
         acronyms   => 0,            # or 1
         sorting    => 1,            # or 0 to preserve input order
         add_detail => 0,            # or 1 to add implied chapter and verse detail
@@ -47,7 +47,7 @@ version 1.11
     my @books  = $r->books;
     my @sorted = $r->sort( 'Romans', 'James 1:5', 'Romans 5' );
 
-    $r->bible('Vulgate');        # switch to the Vulgate Bible
+    $r->bible('Orthodox');       # switch to the Orthodox Bible
     $r->acronyms(1);             # output acronyms instead of full book names
     $r->sorting(0);              # deactivate sorting of references
     $r->add_detail(1);           # turn on adding chapter and verse detail
@@ -62,7 +62,7 @@ return them in various forms desired. It can return the canonicalized within
 the context of the input string or strings as well.
 
 The module supports the Protestant Bible by default and by configuration
-setting also the Orthodox Bible, the current Catholic Bible, and the Vulgate.
+setting also the Orthodox Bible and the current Catholic Bible.
 
 There are also some potentially useful helper methods.
 
@@ -74,7 +74,7 @@ A typical instantiation method that accepts some settings, all of which can
 later be fetched and changed with accessors.
 
     my $r = Bible::Reference->new(
-        bible    => 'Protestant', # or "Orthodox" or "Catholic" or "Vulgate"
+        bible    => 'Protestant', # or "Orthodox" or "Catholic"
         acronyms => 0,            # or 1
         sorting  => 1,            # or 0 to preserve input order
     );
@@ -85,7 +85,7 @@ See the below accessor methods for details on these settings.
 
 This accessor method gets and sets the current Bible to use. By default, the
 Bible is the Protestant Bible (since this is most common). Other Bibles
-supported are the Orthodox, current Catholic, and Vulgate Bibles.
+supported are the Orthodox and current Catholic Bibles.
 
 You can set the value to any substring of the name.
 

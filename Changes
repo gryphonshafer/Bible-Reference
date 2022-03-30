@@ -1,6 +1,9 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+        - Bible structure data update
+        - Handle no space between book and chapter
+        - Improve regex efficiency for verse required
 
 1.11      2022-03-21 11:23:39-07:00 America/Los_Angeles
         - Add identify_bible method
