@@ -4,7 +4,7 @@ Bible::Reference - Simple Bible reference parser, tester, and canonicalizer
 
 # VERSION
 
-version 1.13
+version 1.14
 
 [![test](https://github.com/gryphonshafer/Bible-Reference/workflows/test/badge.svg)](https://github.com/gryphonshafer/Bible-Reference/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/gryphonshafer/Bible-Reference/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/Bible-Reference)
@@ -84,12 +84,12 @@ See the below accessor methods for details on these settings.
 ## bible
 
 This accessor method gets and sets the current Bible to use. By default, the
-Bible is the Protestant Bible (since this is most common). Other Bibles
-supported are the Orthodox and current Catholic Bibles.
+Bible is the Protestant Bible. Other Bibles supported are the Orthodox and
+Catholic Bibles.
 
-You can set the value to any substring of the name.
+You can set the value via a case-insensitive setting.
 
-    $r->bible('c'); # sets Bible to "Catholic"
+    $r->bible('catholic'); # sets Bible to "Catholic"
 
 ## acronyms
 
@@ -275,6 +275,11 @@ acronym.
 
 When you call this method with good input, it will save the new Bible and
 internally call `bible()` to set the new Bible as active.
+
+You may optionally provide an additional arrayref of arrayrefs containing the
+maximum verse number for each chapter of a book. This is useful only if you
+need to call `expand_ranges`. If you don't pass this data, a best-guess of the
+data will be used.
 
 ## expand\_ranges
 

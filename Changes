@@ -1,6 +1,7 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+        - Update Bible structure data mechanism
 
 1.13      2022-10-21 10:38:34-07:00 America/Los_Angeles
         - By-chapter verse counts (for "expand_ranges") data error correction
