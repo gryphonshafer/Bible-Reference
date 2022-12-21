@@ -4,7 +4,7 @@ Bible::Reference - Simple Bible reference parser, tester, and canonicalizer
 
 # VERSION
 
-version 1.14
+version 1.15
 
 [![test](https://github.com/gryphonshafer/Bible-Reference/workflows/test/badge.svg)](https://github.com/gryphonshafer/Bible-Reference/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/gryphonshafer/Bible-Reference/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/Bible-Reference)
@@ -14,11 +14,16 @@ version 1.14
     use Bible::Reference;
 
     my $r = Bible::Reference->new;
+
     $r = Bible::Reference->new(
-        bible      => 'Protestant', # or "Orthodox" or "Catholic"
-        acronyms   => 0,            # or 1
-        sorting    => 1,            # or 0 to preserve input order
-        add_detail => 0,            # or 1 to add implied chapter and verse detail
+        bible                 => 'Protestant', # or "Orthodox" or "Catholic"
+        acronyms              => 0,            # return full book names
+        sorting               => 1,            # sort by reference
+        require_chapter_match => 0,            # don't require chapters in references for matching
+        require_verse_match   => 0,            # don't require verses in references for matching
+        require_book_ucfirst  => 0,            # don't require book names to be ucfirst for matching
+        minimum_book_length   => 3,
+        add_detail            => 0,
     );
 
     $r = $r->in('Text with I Pet 3:16 and Rom 12:13-14,17 references in it.');
@@ -47,12 +52,14 @@ version 1.14
     my @books  = $r->books;
     my @sorted = $r->sort( 'Romans', 'James 1:5', 'Romans 5' );
 
-    $r->bible('Orthodox');       # switch to the Orthodox Bible
-    $r->acronyms(1);             # output acronyms instead of full book names
-    $r->sorting(0);              # deactivate sorting of references
-    $r->add_detail(1);           # turn on adding chapter and verse detail
-    $r->require_verse_match(1);  # require verses in references for matching
-    $r->require_book_ucfirst(1); # require book names to be ucfirst for matching
+    $r->bible('Orthodox');        # switch to the Orthodox Bible
+    $r->acronyms(1);              # output acronyms instead of full book names
+    $r->sorting(0);               # deactivate sorting of references
+    $r->require_chapter_match(1); # require chapters in references for matching
+    $r->require_verse_match(1);   # require verses in references for matching
+    $r->require_book_ucfirst(1);  # require book names to be ucfirst for matching
+    $r->minimum_book_length(4);   # set minimum book length to 4
+    $r->add_detail(1);            # turn on adding chapter and verse detail
 
 # DESCRIPTION
 
@@ -283,10 +290,10 @@ data will be used.
 
 ## expand\_ranges
 
-This is a helper method you'll likely not need to use directly, but it's
-provided just in case you do. It requires 2 strings: a book name and a
-chapter/verse ranges string. It will return a string represented the "expanded"
-chapter/verse range.
+This is a helper method. It's called automatically if `add_detail` is set to a
+true value. The method requires 2 strings: a book name and a chapter/verse
+ranges string. It will return a string represented the "expanded" chapter/verse
+range.
 
     $r->expand_ranges( 'Mark', '1:3-7' );
     # returns "1:3, 4, 5, 6, 7"
@@ -334,10 +341,10 @@ error. For example, consider the following text input:
 
 With this, we'd falsely match: Thessalonians 1, Numbers 7, and Judges 3.
 
-There are a couple things you can do to reduce this problem. You can optionally
-set `require_verse_match` to a true value. This will cause the matching
-algorithm to only work on reference patterns that contain what look to be
-verses.
+There are a few things you can do to reduce this problem. You can optionally set
+`require_chapter_match` or `require_verse_match` to true values. These will
+cause the matching algorithm to only work on reference patterns that contain
+what look to be chapter numbers and/or verse numbers.
 
 You can optionally set `require_book_ucfirst` to a true value. This will cause
 the matching algorithm to only work on reference patterns that contain what
