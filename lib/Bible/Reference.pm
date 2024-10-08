@@ -335,12 +335,13 @@ $bibles->{Protestant} = $bibles->{ESV};
 $bibles->{Catholic}   = $bibles->{RSVCE};
 $bibles->{Orthodox}   = $bibles->{RSV};
 
-# has _bibles     => $bibles;
-has _bibles     => { map { $_ => [ map { [ map { [ @$_] } @$_ ] } @{ $bibles->{$_} } ] } keys %$bibles };
 has _bible      => 'Protestant';
-has _bible_data => {};
-has _data       => [];
-has _cache      => {};
+has _bible_data => sub { {} };
+has _data       => sub { [] };
+has _cache      => sub { {} };
+has _bibles     => sub {
+    return { map { $_ => [ map { [ map { [ @$_] } @$_ ] } @{ $bibles->{$_} } ] } keys %$bibles };
+};
 
 sub bible ( $self, $name = undef ) {
     return $self->_bible unless ($name);

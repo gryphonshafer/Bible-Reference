@@ -1,6 +1,7 @@
 Revision history for Bible::Reference
 
 {{$NEXT}}
+        - Fix cross-object data bleed
 
 1.15      2022-12-21 13:01:27-08:00 America/Los_Angeles
         - Add "simplify" flag and associated functionality
