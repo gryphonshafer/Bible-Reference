@@ -1,7 +1,7 @@
 package Bible::Reference;
 # ABSTRACT: Simple Bible reference parser, tester, and canonicalizer
 
-use 5.020;
+use 5.022;
 
 use exact;
 use exact::class;
