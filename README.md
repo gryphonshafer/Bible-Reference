@@ -4,7 +4,7 @@ Bible::Reference - Simple Bible reference parser, tester, and canonicalizer
 
 # VERSION
 
-version 1.17
+version 1.18
 
 [![test](https://github.com/gryphonshafer/Bible-Reference/workflows/test/badge.svg)](https://github.com/gryphonshafer/Bible-Reference/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/gryphonshafer/Bible-Reference/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/Bible-Reference)
@@ -24,6 +24,7 @@ version 1.17
         require_book_ucfirst  => 0,            # don't require book names to be ucfirst for matching
         minimum_book_length   => 3,
         add_detail            => 0,
+        simplify              => 0,
     );
 
     $r = $r->in('Text with I Pet 3:16 and Rom 12:13-14,17 references in it.');
@@ -60,6 +61,7 @@ version 1.17
     $r->require_book_ucfirst(1);  # require book names to be ucfirst for matching
     $r->minimum_book_length(4);   # set minimum book length to 4
     $r->add_detail(1);            # turn on adding chapter and verse detail
+    $r->simplify(1);              # turn on simplifying if possible the ranges
 
 # DESCRIPTION
 
